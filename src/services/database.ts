@@ -604,20 +604,28 @@ export async function getUserStats(): Promise<UserStats> {
 }
 
 export async function getAppSetting(key: string, defaultValue: string = ''): Promise<string> {
-  const db = getDatabase();
-  const row = await db.getFirstAsync<{ value: string }>(
-    'SELECT value FROM app_settings WHERE key = ?',
-    [key]
-  );
-  return row ? row.value : defaultValue;
+  try {
+    const db = getDatabase();
+    const row = await db.getFirstAsync<{ value: string }>(
+      'SELECT value FROM app_settings WHERE key = ?',
+      [key]
+    );
+    return row ? row.value : defaultValue;
+  } catch {
+    return defaultValue;
+  }
 }
 
 export async function setAppSetting(key: string, value: string): Promise<void> {
-  const db = getDatabase();
-  await db.runAsync(
-    'INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)',
-    [key, value]
-  );
+  try {
+    const db = getDatabase();
+    await db.runAsync(
+      'INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)',
+      [key, value]
+    );
+  } catch {
+    // Gracefully ignore during early startup
+  }
 }
 
 export async function resetDatabase(): Promise<void> {
