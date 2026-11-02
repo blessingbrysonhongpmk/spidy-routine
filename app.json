@@ -10,10 +10,10 @@
     "backgroundColor": "#0B0C0E",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.spideyflow.app"
+      "bundleIdentifier": "com.blessing.spideyflow"
     },
     "android": {
-      "package": "com.spideyflow.app",
+      "package": "com.blessing.spideyflow",
       "adaptiveIcon": {
         "backgroundColor": "#0B0C0E",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -22,7 +22,9 @@
       },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
+        "POST_NOTIFICATIONS",
         "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM",
         "VIBRATE"
       ],
       "predictiveBackGestureEnabled": false
@@ -42,7 +44,13 @@
         }
       ],
       "expo-sqlite",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/android-icon-monochrome.png",
+          "color": "#EF4444"
+        }
+      ],
       "expo-av"
     ],
     "experiments": {
