@@ -1,6 +1,6 @@
-import * as SQLite from 'expo-sqlite';
-import * as Crypto from 'expo-crypto';
 import { Routine, RoutineCategory, RoutineItem, Task } from '@/types';
+import * as Crypto from 'expo-crypto';
+import * as SQLite from 'expo-sqlite';
 import { getTodayDateString } from './dateUtils';
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
@@ -610,7 +610,7 @@ export async function getAppSetting(key: string, defaultValue: string = ''): Pro
       'SELECT value FROM app_settings WHERE key = ?',
       [key]
     );
-    return row ? row.value : defaultValue;
+    return row?.value ?? defaultValue;
   } catch {
     return defaultValue;
   }

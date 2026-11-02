@@ -1,11 +1,10 @@
-import { SpiderEmblem } from '@/components/SpiderEmblem';
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { SpideyColors } from '@/constants/theme';
 import { getAppSetting, setAppSetting } from '@/services/database';
 import { playSound, triggerHaptic } from '@/services/sound';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   Platform,
   StatusBar,
@@ -23,12 +22,12 @@ import Animated, {
   withDelay,
   withRepeat,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, {
   Circle,
   Defs,
+  LinearGradient,
   Path,
   RadialGradient,
   Stop,
@@ -43,9 +42,11 @@ interface CinematicIntroProps {
 
 /**
  * CinematicIntro:
- * High-craftsmanship personalized startup introduction featuring the user's comic portrait.
- * Rebuilt from the ground up for 100% reliability, centered responsive visual composition,
- * zero black-screen lockups, instant skip responsiveness, and fluid superhero animations.
+ * High-craftsmanship personalized cinematic startup experience.
+ * Features the user's comic-book hero poster artwork edge-to-edge,
+ * layered with dynamic Thor electric-blue lightning flashes,
+ * an active laser progress bar fill, symbiote atmospheric pulse,
+ * audio/haptic cues, and an instant Skip button.
  */
 export const CinematicIntro: React.FC<CinematicIntroProps> = ({
   onComplete,
@@ -57,32 +58,23 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
   const screenWidth = windowWidth || 380;
   const screenHeight = windowHeight || 800;
 
-  // Responsive sizing: Portrait container occupies 42% - 46% of screen height
-  const portraitHeight = Math.min(Math.round(screenHeight * 0.44), 380);
-  const portraitWidth = Math.min(Math.round(screenWidth * 0.82), 340);
-
-  const [greetingText, setGreetingText] = useState('HEY, BOSS!');
   const completedRef = useRef(false);
 
-  // Animation Shared Values — Initialized with safe start values
+  // Animation Shared Values
   const screenOpacity = useSharedValue(1);
-  const portraitOpacity = useSharedValue(0);
-  const portraitScale = useSharedValue(0.9);
-  const webLinesOpacity = useSharedValue(0);
   const lightningOpacity = useSharedValue(0);
-  const logoOpacity = useSharedValue(0);
-  const taglineOpacity = useSharedValue(0);
+  const webGlintOpacity = useSharedValue(0);
   const progressBarWidth = useSharedValue(0);
   const symbiotePulse = useSharedValue(0.7);
 
-  // Dismiss helper with Reanimated fade-out
+  // Safe dismiss helper with Reanimated fade-out
   const finishIntro = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
 
     screenOpacity.value = withTiming(
       0,
-      { duration: 320, easing: Easing.out(Easing.cubic) },
+      { duration: 340, easing: Easing.out(Easing.cubic) },
       () => {
         runOnJS(onComplete)();
       }
@@ -95,98 +87,68 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
     finishIntro();
   }, [finishIntro]);
 
-  // Typewriter text animation for "HEY, BOSS!"
-  const startTypewriterGreeting = useCallback(() => {
-    const fullText = 'HEY, BOSS!';
-    let idx = 0;
-    const interval = setInterval(() => {
-      idx++;
-      setGreetingText(fullText.slice(0, idx));
-      if (idx >= fullText.length) {
-        clearInterval(interval);
-      }
-    }, 45);
-  }, []);
-
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Symbiote organic breathing pulse loop
+    // 1. Symbiote organic breathing pulse
     symbiotePulse.value = withRepeat(
       withSequence(
-        withTiming(1.0, { duration: 1800, easing: Easing.inOut(Easing.quad) }),
-        withTiming(0.65, { duration: 1800, easing: Easing.inOut(Easing.quad) })
+        withTiming(1.0, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0.65, { duration: 1600, easing: Easing.inOut(Easing.quad) })
       ),
       -1,
       true
     );
 
-    // 2. Main Visual Animation Pipeline (Kicks off IMMEDIATELY on frame 0 — ZERO blocking awaits)
-    portraitOpacity.value = withTiming(1, {
-      duration: 450,
-      easing: Easing.out(Easing.quad),
-    });
-
-    portraitScale.value = withSpring(1.0, {
-      damping: 14,
-      stiffness: 120,
-    });
-
-    webLinesOpacity.value = withDelay(
-      150,
-      withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) })
-    );
-
-    // Thor electric-blue lightning streak flash
-    lightningOpacity.value = withDelay(
-      450,
+    // 2. Spider web specular glint
+    webGlintOpacity.value = withDelay(
+      200,
       withSequence(
-        withTiming(1.0, { duration: 80 }),
-        withTiming(0.2, { duration: 50 }),
-        withTiming(0.9, { duration: 70 }),
-        withTiming(0, { duration: 280, easing: Easing.out(Easing.quad) })
+        withTiming(0.8, { duration: 300, easing: Easing.out(Easing.quad) }),
+        withTiming(0.3, { duration: 500, easing: Easing.inOut(Easing.quad) })
       )
     );
 
-    // SPIDEY FLOW Logo & Tagline reveal
-    logoOpacity.value = withDelay(
-      300,
-      withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) })
+    // 3. Thor electric-blue lightning streak flash
+    lightningOpacity.value = withDelay(
+      420,
+      withSequence(
+        withTiming(1.0, { duration: 70 }),
+        withTiming(0.2, { duration: 40 }),
+        withTiming(0.9, { duration: 80 }),
+        withTiming(0, { duration: 320, easing: Easing.out(Easing.quad) })
+      )
     );
 
-    taglineOpacity.value = withDelay(
-      450,
-      withTiming(1, { duration: 400, easing: Easing.out(Easing.quad) })
-    );
-
-    // Progress bar fills smoothly from 0% to 100%
+    // 4. Active Progress Bar fills smoothly from 0% to 100%
     progressBarWidth.value = withDelay(
-      350,
+      250,
       withTiming(1, {
-        duration: 1400,
+        duration: 1550,
         easing: Easing.bezier(0.16, 1, 0.3, 1),
       })
     );
 
-    // Sound effect & typewriter audio triggers (non-blocking)
+    // 5. Sound & Haptic FX
     try {
       playSound('startupWhoosh');
-      setTimeout(() => {
-        if (!isMounted || completedRef.current) return;
-        playSound('webShoot');
-        triggerHaptic('light');
-      }, 350);
 
       setTimeout(() => {
         if (!isMounted || completedRef.current) return;
         playSound('electricCrackle');
-        startTypewriterGreeting();
-      }, 550);
+        triggerHaptic('medium');
+      }, 420);
+
+      setTimeout(() => {
+        if (!isMounted || completedRef.current) return;
+        playSound('webShoot');
+        triggerHaptic('light');
+      }, 900);
     } catch {
       // Audio engine gracefully non-blocking
     }
 
-    // 3. Background Settings Check (Completely decoupled from visual rendering)
+    // 6. Decoupled Settings Check
     (async () => {
       try {
         const introEnabled = (await getAppSetting('intro_enabled', 'true')) === 'true';
@@ -196,17 +158,17 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
         }
         await setAppSetting('intro_has_launched', 'true');
       } catch {
-        // Safe fallback — never crashes the UI
+        // Safe fallback
       }
     })();
 
-    // 4. Automatic Transition: Smooth exit once animation finishes
+    // 7. Auto-dismiss when animation finishes (~2.2s)
     const autoDismissTimer = setTimeout(() => {
       if (!isMounted || completedRef.current) return;
       finishIntro();
-    }, 2200);
+    }, 2250);
 
-    // 5. Hard safety fallback timer: Guarantees user is NEVER trapped on splash screen
+    // 8. Hard safety timeout (Guarantees user is never trapped)
     const hardFallbackTimer = setTimeout(() => {
       if (!isMounted || completedRef.current) return;
       finishIntro();
@@ -220,22 +182,17 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
   }, [
     finishIntro,
     lightningOpacity,
-    logoOpacity,
-    portraitOpacity,
-    portraitScale,
     progressBarWidth,
-    startTypewriterGreeting,
     symbiotePulse,
-    taglineOpacity,
-    webLinesOpacity,
+    webGlintOpacity,
   ]);
 
-  // When real app initialization completes while progress is full
+  // When app initialization is ready and progress bar has completed
   useEffect(() => {
-    if (isAppReady && !completedRef.current && progressBarWidth.value >= 0.95) {
+    if (isAppReady && !completedRef.current && progressBarWidth.value >= 0.98) {
       const exitTimer = setTimeout(() => {
         finishIntro();
-      }, 250);
+      }, 200);
       return () => clearTimeout(exitTimer);
     }
   }, [isAppReady, finishIntro, progressBarWidth.value]);
@@ -245,222 +202,166 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
     opacity: screenOpacity.value,
   }));
 
-  const portraitAnimStyle = useAnimatedStyle(() => ({
-    opacity: portraitOpacity.value,
-    transform: [{ scale: portraitScale.value }],
-  }));
-
-  const webAnimStyle = useAnimatedStyle(() => ({
-    opacity: webLinesOpacity.value,
-  }));
-
   const lightningAnimStyle = useAnimatedStyle(() => ({
     opacity: lightningOpacity.value,
   }));
 
-  const logoAnimStyle = useAnimatedStyle(() => ({
-    opacity: logoOpacity.value,
-  }));
-
-  const taglineAnimStyle = useAnimatedStyle(() => ({
-    opacity: taglineOpacity.value,
-  }));
-
-  const progressAnimStyle = useAnimatedStyle(() => ({
-    width: `${Math.min(100, Math.max(0, progressBarWidth.value * 100))}%`,
+  const webAnimStyle = useAnimatedStyle(() => ({
+    opacity: webGlintOpacity.value,
   }));
 
   const symbioteAnimStyle = useAnimatedStyle(() => ({
     opacity: symbiotePulse.value,
   }));
 
+  const progressFillAnimStyle = useAnimatedStyle(() => ({
+    width: `${Math.min(100, Math.max(0, progressBarWidth.value * 100))}%`,
+  }));
+
+  // Target coordinates for progress bar overlay matching poster layout
+  // Progress bar in 472x1024 poster sits at ~83.6% of screen height
+  const progressTopOffset = Math.round(screenHeight * 0.834);
+  const progressTrackWidth = Math.min(Math.round(screenWidth * 0.73), 320);
+
   return (
     <Animated.View style={[styles.fullScreenContainer, screenAnimStyle]}>
       <ExpoStatusBar style="light" />
 
-      {/* Atmospheric Venom & Thor Radial Dusk Backdrop */}
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <Svg width="100%" height="100%" viewBox={`0 0 ${screenWidth} ${screenHeight}`} fill="none">
+      {/* 1. Full-Screen Personalized Comic Hero Poster Background */}
+      <Image
+        source={require('@/assets/images/hero-portrait.jpg')}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        priority="high"
+        transition={200}
+      />
+
+      {/* 2. Top Bar Subtle Dark Gradient (Ensures Skip button legibility on all notches) */}
+      <View style={styles.topVignette} pointerEvents="none">
+        <Svg width="100%" height={100} fill="none">
           <Defs>
-            <RadialGradient id="introDuskGlow" cx="50%" cy="40%" r="70%">
-              <Stop offset="0%" stopColor="#1E1B4B" stopOpacity="0.35" />
-              <Stop offset="50%" stopColor="#0F172A" stopOpacity="0.45" />
-              <Stop offset="100%" stopColor="#07080A" stopOpacity="1" />
-            </RadialGradient>
-
-            <RadialGradient id="topWebCrimson" cx="10%" cy="10%" r="55%">
-              <Stop offset="0%" stopColor="#EF4444" stopOpacity="0.22" />
-              <Stop offset="100%" stopColor="#07080A" stopOpacity="0" />
-            </RadialGradient>
-
-            <RadialGradient id="topLightningCyan" cx="90%" cy="15%" r="55%">
-              <Stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.25" />
-              <Stop offset="100%" stopColor="#07080A" stopOpacity="0" />
-            </RadialGradient>
+            <LinearGradient id="topVignetteGrad" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor="#000000" stopOpacity="0.65" />
+              <Stop offset="60%" stopColor="#000000" stopOpacity="0.25" />
+              <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            </LinearGradient>
           </Defs>
-
-          <Path d={`M0 0 H${screenWidth} V${screenHeight} H0 Z`} fill="url(#introDuskGlow)" />
-          <Path d={`M0 0 H${screenWidth * 0.7} V${screenHeight * 0.4} H0 Z`} fill="url(#topWebCrimson)" />
-          <Path d={`M${screenWidth * 0.3} 0 H${screenWidth} V${screenHeight * 0.4} H${screenWidth * 0.3} Z`} fill="url(#topLightningCyan)" />
+          <Path d={`M0 0 H${screenWidth} V100 H0 Z`} fill="url(#topVignetteGrad)" />
         </Svg>
       </View>
 
-      {/* Living Venom Symbiote Tendril Silhouette (Pulsing around edges) */}
-      <Animated.View style={[StyleSheet.absoluteFill, symbioteAnimStyle]} pointerEvents="none">
-        <Svg width="100%" height="100%" viewBox={`0 0 ${screenWidth} ${screenHeight}`} fill="none">
-          <Path
-            d={`M0 ${screenHeight * 0.75} Q 40 ${screenHeight * 0.7} 20 ${screenHeight * 0.85} T 50 ${screenHeight * 0.92} T 0 ${screenHeight}`}
-            stroke="#8B5CF6"
-            strokeWidth="1.2"
-            strokeOpacity="0.2"
-            fill="none"
-          />
-          <Path
-            d={`M${screenWidth} ${screenHeight * 0.7} Q ${screenWidth - 40} ${screenHeight * 0.75} ${screenWidth - 15} ${screenHeight * 0.82} T ${screenWidth - 35} ${screenHeight * 0.9} T ${screenWidth} ${screenHeight}`}
-            stroke="#C084FC"
-            strokeWidth="1.2"
-            strokeOpacity="0.18"
-            fill="none"
-          />
+      {/* 3. Spider-Man Corner Web Specular Pulse (Top Left) */}
+      <Animated.View style={[styles.webCornerOverlay, webAnimStyle]} pointerEvents="none">
+        <Svg width={180} height={180} viewBox="0 0 180 180" fill="none">
+          <Defs>
+            <RadialGradient id="webCrimsonGlow" cx="0%" cy="0%" r="90%">
+              <Stop offset="0%" stopColor="#EF4444" stopOpacity="0.45" />
+              <Stop offset="50%" stopColor="#EF4444" stopOpacity="0.15" />
+              <Stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
+            </RadialGradient>
+          </Defs>
+          <Path d="M0 0 H180 V180 H0 Z" fill="url(#webCrimsonGlow)" />
         </Svg>
       </Animated.View>
 
-      {/* =========================================================================
-          1. TOP BAR: Small SPIDEY FLOW Branding & Immediate Skip Button
-          ========================================================================= */}
-      <View style={styles.topBar}>
-        <View style={styles.brandTitleCol}>
-          <View style={styles.brandLogoRow}>
-            <Text style={styles.brandSpideyMini}>SPIDEY </Text>
-            <Text style={styles.brandFlowMini}>FLOW</Text>
-            <View style={styles.brandDot} />
-          </View>
-          <Text style={styles.brandTaglineMini}>YOUR DAY. YOUR MISSION.</Text>
-        </View>
+      {/* 4. Thor Electric-Blue Lightning Arc Overlay (Upper Right) */}
+      <Animated.View style={[styles.lightningOverlay, lightningAnimStyle]} pointerEvents="none">
+        <Svg width="100%" height="100%" viewBox="0 0 240 320" fill="none">
+          <Path
+            d="M210 15 L165 75 L180 92 L120 165 L140 180 L80 255"
+            stroke="#38BDF8"
+            strokeWidth="3.2"
+            strokeOpacity="0.95"
+          />
+          <Path
+            d="M210 15 L165 75 L180 92 L120 165 L140 180 L80 255"
+            stroke="#FFFFFF"
+            strokeWidth="1.5"
+            strokeOpacity="1"
+          />
+          <Path
+            d="M165 75 L130 95 L115 130"
+            stroke="#0EA5E9"
+            strokeWidth="1.6"
+            strokeOpacity="0.75"
+          />
+          <Path
+            d="M120 165 L155 190 L145 220"
+            stroke="#38BDF8"
+            strokeWidth="1.4"
+            strokeOpacity="0.7"
+          />
+          <Circle cx="120" cy="165" r="4.5" fill="#E0F2FE" />
+          <Circle cx="80" cy="255" r="3.5" fill="#38BDF8" />
+        </Svg>
+      </Animated.View>
 
+      {/* 5. Venom Symbiote Atmospheric Energy Breath (Bottom Edges) */}
+      <Animated.View style={[styles.symbioteBottomOverlay, symbioteAnimStyle]} pointerEvents="none">
+        <Svg width="100%" height={160} viewBox={`0 0 ${screenWidth} 160`} fill="none">
+          <Defs>
+            <RadialGradient id="venomPurpleGlowLeft" cx="0%" cy="100%" r="85%">
+              <Stop offset="0%" stopColor="#7C3AED" stopOpacity="0.32" />
+              <Stop offset="60%" stopColor="#4C1D95" stopOpacity="0.12" />
+              <Stop offset="100%" stopColor="#0B0C0E" stopOpacity="0" />
+            </RadialGradient>
+            <RadialGradient id="venomPurpleGlowRight" cx="100%" cy="100%" r="85%">
+              <Stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.3" />
+              <Stop offset="60%" stopColor="#581C87" stopOpacity="0.1" />
+              <Stop offset="100%" stopColor="#0B0C0E" stopOpacity="0" />
+            </RadialGradient>
+          </Defs>
+          <Path d={`M0 0 H${screenWidth * 0.55} V160 H0 Z`} fill="url(#venomPurpleGlowLeft)" />
+          <Path d={`M${screenWidth * 0.45} 0 H${screenWidth} V160 H${screenWidth * 0.45} Z`} fill="url(#venomPurpleGlowRight)" />
+        </Svg>
+      </Animated.View>
+
+      {/* 6. Active Laser Progress Bar Overlay (Precision aligned with printed bar) */}
+      <View
+        style={[
+          styles.progressOverlayContainer,
+          {
+            top: progressTopOffset,
+            width: progressTrackWidth,
+          },
+        ]}
+        pointerEvents="none"
+      >
+        <View style={styles.activeProgressTrack}>
+          <Animated.View style={[styles.activeProgressFill, progressFillAnimStyle]}>
+            {/* Bright Laser Spark Head */}
+            <View style={styles.activeLaserHead} />
+          </Animated.View>
+        </View>
+      </View>
+
+      {/* 7. Immediate Skip Button (Top Right) */}
+      <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.skipButton}
           onPress={handleSkip}
           activeOpacity={0.7}
+          hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
           accessibilityRole="button"
           accessibilityLabel="Skip intro and open dashboard"
         >
           <Text style={styles.skipText}>Skip</Text>
-          <Ionicons name="chevron-forward" size={13} color={SpideyColors.textSecondary} />
+          <Ionicons name="chevron-forward" size={13} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
-      {/* =========================================================================
-          2. CENTRE: Comic Portrait Frame (40–50% Height) with Webs & Lightning
-          ========================================================================= */}
-      <View style={styles.centerContainer}>
-        <View style={[styles.portraitBox, { width: portraitWidth, height: portraitHeight }]}>
-          {/* Spider-Man Corner Web Graphics (Behind & Framing the Portrait) */}
-          <Animated.View style={[StyleSheet.absoluteFill, webAnimStyle]} pointerEvents="none">
-            <Svg width="100%" height="100%" viewBox="0 0 340 380" fill="none">
-              <Path d="M0 0 L110 110" stroke="#EF4444" strokeWidth="1.2" strokeOpacity="0.4" />
-              <Path d="M0 0 L150 70" stroke="#EF4444" strokeWidth="1.0" strokeOpacity="0.35" />
-              <Path d="M0 0 L70 150" stroke="#EF4444" strokeWidth="1.0" strokeOpacity="0.35" />
-              <Path d="M30 40 Q 40 30 50 12" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.25" />
-              <Path d="M60 80 Q 80 60 100 24" stroke="#EF4444" strokeWidth="0.9" strokeOpacity="0.35" />
-              <Path d="M90 120 Q 120 90 150 36" stroke="#FFFFFF" strokeWidth="0.8" strokeOpacity="0.25" />
-            </Svg>
-          </Animated.View>
-
-          {/* Thor Branching Lightning Streak (Top-Right of Portrait) */}
-          <Animated.View style={[StyleSheet.absoluteFill, lightningAnimStyle]} pointerEvents="none">
-            <Svg width="100%" height="100%" viewBox="0 0 340 380" fill="none">
-              <Path
-                d="M330 10 L280 60 L295 75 L240 140 L255 155 L200 220"
-                stroke="#38BDF8"
-                strokeWidth="2.2"
-                strokeOpacity="0.85"
-              />
-              <Path
-                d="M330 10 L280 60 L295 75 L240 140"
-                stroke="#FFFFFF"
-                strokeWidth="1.2"
-                strokeOpacity="0.9"
-              />
-              <Path
-                d="M280 60 L250 80 L235 110"
-                stroke="#0EA5E9"
-                strokeWidth="1.2"
-                strokeOpacity="0.6"
-              />
-              <Circle cx="240" cy="140" r="3" fill="#E0F2FE" />
-              <Circle cx="200" cy="220" r="2.5" fill="#38BDF8" />
-            </Svg>
-          </Animated.View>
-
-          {/* Freaky Comic Portrait Artwork */}
-          <Animated.View style={[styles.portraitCard, portraitAnimStyle]}>
-            <Image
-              source={require('@/assets/images/hero-portrait.jpg')}
-              style={styles.portraitImg}
-              contentFit="cover"
-              priority="high"
-              transition={200}
-            />
-
-            {/* Subtle Comic Halftone & Rim Glow Frame */}
-            <View style={styles.portraitRimBorder} pointerEvents="none" />
-          </Animated.View>
+      {/* 8. Fallback Error Notice if offline initialization fails */}
+      {initError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>Notice: {initError}</Text>
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={() => (onRetry ? onRetry() : finishIntro())}
+          >
+            <Text style={styles.retryBtnText}>Continue Offline</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-
-      {/* =========================================================================
-          3. BELOW PORTRAIT: SPIDEY FLOW Logo, "HEY, BOSS!", & Mission Motto
-          ========================================================================= */}
-      <View style={styles.bottomSection}>
-        {/* Animated Greeting "HEY, BOSS!" */}
-        <Animated.View style={[styles.greetingRow, taglineAnimStyle]}>
-          <Text style={styles.greetingTitle}>{greetingText}</Text>
-        </Animated.View>
-
-        {/* Large SPIDEY FLOW Comic Brand Logo */}
-        <Animated.View style={[styles.mainBrandLogo, logoAnimStyle]}>
-          <View style={styles.brandTitleRow}>
-            <Text style={styles.spideyWord}>SPIDEY </Text>
-            <Text style={styles.flowWord}>FLOW</Text>
-          </View>
-          <Text style={styles.missionTagline}>YOUR DAY. YOUR MISSION.</Text>
-        </Animated.View>
-
-        {/* =========================================================================
-            4. BOTTOM: Loading Progress Telemetry & Status Indicator
-            ========================================================================= */}
-        <Animated.View style={[styles.progressBlock, taglineAnimStyle]}>
-          <Text style={styles.statusLabel}>INITIALIZING YOUR DAILY MISSION...</Text>
-
-          <View style={styles.progressTrack}>
-            <Animated.View style={[styles.progressFill, progressAnimStyle]} />
-          </View>
-
-          <View style={styles.poweringUpRow}>
-            <Ionicons name="flash" size={11} color={SpideyColors.thorGold} style={styles.powerIcon} />
-            <Text style={styles.poweringUpText}>POWERING UP...</Text>
-          </View>
-        </Animated.View>
-
-        {/* Centered Laser-Etched Spider Emblem Insignia */}
-        <View style={styles.emblemContainer}>
-          <SpiderEmblem size={24} color={SpideyColors.textMuted} opacity={0.4} />
-        </View>
-
-        {/* Fallback Error Banner if Offline / Init Notice */}
-        {initError && (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorText}>Notice: {initError}</Text>
-            <TouchableOpacity
-              style={styles.retryBtn}
-              onPress={() => (onRetry ? onRetry() : finishIntro())}
-            >
-              <Text style={styles.retryBtnText}>Continue Offline</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      )}
     </Animated.View>
   );
 };
@@ -474,222 +375,118 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#07080A',
     zIndex: 9999,
-    justifyContent: 'space-between',
   },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 28) + 10 : 52,
-    paddingHorizontal: Spacing.xl,
-    zIndex: 30,
-  },
-  brandTitleCol: {
-    flex: 1,
-  },
-  brandLogoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  brandSpideyMini: {
-    fontSize: 14,
-    fontWeight: '900',
-    fontStyle: 'italic',
-    color: '#FFFFFF',
-    letterSpacing: 1.2,
-  },
-  brandFlowMini: {
-    fontSize: 14,
-    fontWeight: '900',
-    fontStyle: 'italic',
-    color: SpideyColors.spideyRed,
-    letterSpacing: 1.2,
-  },
-  brandDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: SpideyColors.spideyRed,
-    marginLeft: 3,
-  },
-  brandTaglineMini: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: SpideyColors.textMuted,
-    letterSpacing: 1.1,
-    marginTop: 2,
-  },
-  skipButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.16)',
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: Radii.pill,
-    gap: 4,
-  },
-  skipText: {
-    color: SpideyColors.textPrimary,
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    marginVertical: 4,
-  },
-  portraitBox: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  portraitCard: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 22,
-    overflow: 'hidden',
-    backgroundColor: '#0F1117',
-    borderWidth: 1.8,
-    borderColor: 'rgba(239, 68, 68, 0.45)',
-    shadowColor: SpideyColors.spideyRed,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 18,
-    elevation: 8,
-  },
-  portraitImg: {
-    width: '100%',
-    height: '100%',
-  },
-  portraitRimBorder: {
+  topVignette: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    height: 100,
+    zIndex: 10,
   },
-  bottomSection: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Platform.OS === 'android' ? 24 : 38,
+  topBar: {
+    position: 'absolute',
+    top: Platform.OS === 'android' ? (StatusBar.currentHeight || 28) + 8 : 48,
+    right: 18,
     zIndex: 30,
   },
-  greetingRow: {
-    marginBottom: 4,
-  },
-  greetingTitle: {
-    fontSize: 19,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 1.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-  },
-  mainBrandLogo: {
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  brandTitleRow: {
+  skipButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(11, 12, 14, 0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    gap: 3,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  spideyWord: {
-    fontSize: 32,
-    fontWeight: '900',
-    fontStyle: 'italic',
+  skipText: {
     color: '#FFFFFF',
-    letterSpacing: 1.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
-  },
-  flowWord: {
-    fontSize: 32,
-    fontWeight: '900',
-    fontStyle: 'italic',
-    color: SpideyColors.spideyRed,
-    letterSpacing: 1.5,
-    textShadowColor: 'rgba(239, 68, 68, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
-  },
-  missionTagline: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: SpideyColors.textSecondary,
-    letterSpacing: 2,
-    marginTop: 3,
-    textShadowColor: 'rgba(0, 0, 0, 0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  progressBlock: {
-    width: '100%',
-    maxWidth: 270,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  statusLabel: {
-    fontSize: 9.5,
+    fontSize: 12,
     fontWeight: '700',
-    color: SpideyColors.textMuted,
-    letterSpacing: 1,
-    marginBottom: 6,
-    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  progressTrack: {
+  webCornerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 180,
+    height: 180,
+    zIndex: 5,
+  },
+  lightningOverlay: {
+    position: 'absolute',
+    top: '8%',
+    right: '2%',
+    width: '52%',
+    height: '42%',
+    zIndex: 6,
+  },
+  symbioteBottomOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 160,
+    zIndex: 5,
+  },
+  progressOverlayContainer: {
+    position: 'absolute',
+    alignSelf: 'center',
+    height: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 20,
+  },
+  activeProgressTrack: {
     width: '100%',
-    height: 3.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: Radii.pill,
+    height: 7,
+    borderRadius: 4,
     overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
-  progressFill: {
+  activeProgressFill: {
     height: '100%',
-    backgroundColor: SpideyColors.spideyRed,
-    borderRadius: Radii.pill,
-    shadowColor: SpideyColors.spideyRed,
+    backgroundColor: 'rgba(239, 68, 68, 0.88)',
+    borderRadius: 4,
+    shadowColor: '#EF4444',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 5,
+    shadowOpacity: 0.95,
+    shadowRadius: 8,
+    position: 'relative',
   },
-  poweringUpRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 5,
-  },
-  powerIcon: {
-    marginTop: 1,
-  },
-  poweringUpText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    color: SpideyColors.textMuted,
-    letterSpacing: 1.5,
-  },
-  emblemContainer: {
-    marginTop: 4,
-    alignItems: 'center',
+  activeLaserHead: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 9,
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
   },
   errorBanner: {
-    marginTop: 8,
+    position: 'absolute',
+    bottom: 24,
+    alignSelf: 'center',
     backgroundColor: 'rgba(19, 21, 26, 0.95)',
     borderWidth: 1,
     borderColor: SpideyColors.spideyRedBorder,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: Radii.sm,
+    borderRadius: 8,
     alignItems: 'center',
     gap: 4,
+    zIndex: 40,
   },
   errorText: {
     color: SpideyColors.textSecondary,
@@ -699,7 +496,7 @@ const styles = StyleSheet.create({
     backgroundColor: SpideyColors.spideyRed,
     paddingVertical: 3,
     paddingHorizontal: 8,
-    borderRadius: Radii.xs,
+    borderRadius: 4,
   },
   retryBtnText: {
     color: '#FFFFFF',
