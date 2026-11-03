@@ -25,7 +25,9 @@
         "POST_NOTIFICATIONS",
         "SCHEDULE_EXACT_ALARM",
         "USE_EXACT_ALARM",
-        "VIBRATE"
+        "VIBRATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -51,10 +53,29 @@
           "color": "#EF4444"
         }
       ],
-      "expo-av"
+      "expo-av",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": false,
+            "extraProguardRules": "-dontwarn expo.modules.av.**\n-dontwarn expo.modules.core.**\n-dontwarn expo.modules.kotlin.**\n-keep class expo.modules.av.** { *; }\n-keep class expo.modules.core.** { *; }\n-keep class expo.modules.kotlin.** { *; }"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "07b735d1-85d4-453a-9b8c-24462ad0a395"
+      }
     }
   }
 }
