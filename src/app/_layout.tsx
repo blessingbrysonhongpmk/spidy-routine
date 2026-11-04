@@ -24,8 +24,15 @@ function AppNavigation() {
   const isAppReady = initialized && !loading;
 
   useEffect(() => {
-    // Hide the native splash screen as soon as our React tree mounts
+    // Immediately hide the native splash screen as soon as our React tree mounts
     SplashScreen.hideAsync().catch(() => {});
+
+    // Safety fallback: guarantee native splash screen is never stuck
+    const fallbackTimer = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 600);
+
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   const handleIntroComplete = () => {
