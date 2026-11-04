@@ -111,15 +111,29 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
     initDatabase()
       .then(() => {
-        setInitialized(true);
-        return loadData(selectedDate);
+        if (mounted) {
+          setInitialized(true);
+        }
       })
       .catch((err) => {
         console.error('Database initialization error:', err);
+        if (mounted) {
+          setInitialized(true);
+        }
       });
-  }, [loadData, selectedDate]);
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (initialized) {
+      loadData(selectedDate);
+    }
+  }, [initialized, selectedDate, loadData]);
 
   const refreshData = async () => {
     await loadData(selectedDate);

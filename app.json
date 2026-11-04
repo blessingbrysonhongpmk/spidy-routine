@@ -53,16 +53,17 @@
           "color": "#EF4444"
         }
       ],
-      "expo-av",
       [
         "expo-build-properties",
         {
           "android": {
             "enableProguardInReleaseBuilds": false,
-            "extraProguardRules": "-dontwarn expo.modules.av.**\n-dontwarn expo.modules.core.**\n-dontwarn expo.modules.kotlin.**\n-keep class expo.modules.av.** { *; }\n-keep class expo.modules.core.** { *; }\n-keep class expo.modules.kotlin.** { *; }"
+            "extraProguardRules": "-dontwarn expo.modules.core.**\n-dontwarn expo.modules.kotlin.**"
           }
         }
-      ]
+      ],
+      "expo-audio",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,4 +1,4 @@
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync, AudioPlayer } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
 import { getAppSetting } from './database';
 
@@ -18,7 +18,7 @@ let masterVolume = 0.8;
 let hapticsEnabled = true;
 
 // Preloaded sound instances for immediate latency-free playback
-const loadedSounds: Partial<Record<SoundEffectType, Audio.Sound>> = {};
+const loadedSounds: Partial<Record<SoundEffectType, AudioPlayer>> = {};
 
 // Helper: build a minimal 16-bit PCM mono WAV file as a base64 Data URI
 function generateWavDataUri(
@@ -187,11 +187,15 @@ function createLogoRevealUri(): string {
 
 export async function initSoundService(): Promise<void> {
   try {
-    await Audio.setAudioModeAsync({
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
+    try {
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        interruptionMode: 'duckOthers',
+      });
+    } catch (modeErr) {
+      console.warn('Audio mode initialization warning:', modeErr);
+    }
 
     const sEnabled = await getAppSetting('sound_enabled', 'true');
     const sVol = await getAppSetting('master_volume', '0.8');
@@ -217,11 +221,9 @@ export async function initSoundService(): Promise<void> {
     for (const [key, fn] of Object.entries(uris)) {
       try {
         const uri = fn();
-        const { sound } = await Audio.Sound.createAsync(
-          { uri },
-          { shouldPlay: false, volume: masterVolume }
-        );
-        loadedSounds[key as SoundEffectType] = sound;
+        const player = createAudioPlayer({ uri });
+        player.volume = masterVolume;
+        loadedSounds[key as SoundEffectType] = player;
       } catch (err) {
         console.warn(`Could not preload SFX ${key}:`, err);
       }
@@ -234,10 +236,15 @@ export async function initSoundService(): Promise<void> {
 export async function playSound(type: SoundEffectType): Promise<void> {
   if (!soundEnabled) return;
   try {
-    const sound = loadedSounds[type];
-    if (sound) {
-      await sound.setVolumeAsync(masterVolume);
-      await sound.replayAsync();
+    const player = loadedSounds[type];
+    if (player) {
+      player.volume = masterVolume;
+      try {
+        await player.seekTo(0);
+      } catch {
+        // Non-blocking seek fallback
+      }
+      player.play();
     }
   } catch (error) {
     // Non-fatal, keep app moving smoothly
@@ -279,6 +286,15 @@ export function setSoundEnabled(enabled: boolean) {
 
 export function setSoundVolume(volume: number) {
   masterVolume = Math.max(0, Math.min(1, volume));
+  for (const player of Object.values(loadedSounds)) {
+    if (player) {
+      try {
+        player.volume = masterVolume;
+      } catch {
+        // Non-fatal
+      }
+    }
+  }
 }
 
 export function setHapticsEnabled(enabled: boolean) {
