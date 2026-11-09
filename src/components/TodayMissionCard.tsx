@@ -1,4 +1,5 @@
 import { Radii, Spacing } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
 import { useSound } from '@/context/SoundContext';
 import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,6 +25,7 @@ export const TodayMissionCard: React.FC<TodayMissionCardProps> = ({
   onPress,
 }) => {
   const colors = useTheme();
+  const { user } = useAuth();
   const { playSound, triggerHaptic } = useSound();
 
   const handlePress = () => {
@@ -32,7 +34,7 @@ export const TodayMissionCard: React.FC<TodayMissionCardProps> = ({
     onPress();
   };
 
-  const targetCount = totalTasks > 0 ? totalTasks : 5;
+  const targetCount = user?.dailyTarget || (totalTasks > 0 ? totalTasks : 5);
   const completedCount = completedTasks;
 
   return (

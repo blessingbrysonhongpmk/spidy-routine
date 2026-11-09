@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { UserProfile } from '@/types';
-import { getPersistedUser, loginWithEmail, loginWithGoogleSimulated, logoutUser, persistUser, registerWithEmail } from '@/services/auth';
+import {
+  getPersistedUser,
+  loginWithEmail,
+  loginWithGoogleSimulated,
+  logoutUser,
+  persistUser,
+  registerWithEmail,
+  resetUserProfileToBlank,
+  updateUserProfile,
+} from '@/services/auth';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -10,6 +19,8 @@ interface AuthContextType {
   loginGoogle: (name?: string, email?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserName: (name: string) => Promise<void>;
+  updateProfile: (details: Partial<UserProfile>) => Promise<void>;
+  resetProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -59,6 +70,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(updated);
   };
 
+  const updateProfile = async (details: Partial<UserProfile>) => {
+    const updated = await updateUserProfile(details);
+    setUser(updated);
+  };
+
+  const resetProfile = async () => {
+    const blank = await resetUserProfileToBlank();
+    setUser(blank);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -69,6 +90,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginGoogle,
         logout,
         updateUserName,
+        updateProfile,
+        resetProfile,
       }}>
       {children}
     </AuthContext.Provider>

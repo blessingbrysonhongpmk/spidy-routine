@@ -1,5 +1,6 @@
 import { AddTaskButton } from '@/components/AddTaskButton';
 import { HeaderBranding } from '@/components/HeaderBranding';
+import { HeroPowerBar } from '@/components/HeroPowerBar';
 import { NextActivityCard } from '@/components/NextActivityCard';
 import { TimelineSection } from '@/components/TimelineSection';
 import { TodayMissionCard } from '@/components/TodayMissionCard';
@@ -119,6 +120,9 @@ export default function TodayDashboardScreen() {
           streakDays={userStats?.streakDays || 1}
           onProgressPress={() => router.push('/(tabs)/calendar')}
         />
+
+        {/* Interactive Legendary Superhero Power Bar (Spider-Man, Thor, Venom) */}
+        <HeroPowerBar />
 
         {/* 2. Today's Mission Card: Bullseye Target, Complete 5 tasks, Count Tally */}
         <TodayMissionCard

@@ -5,6 +5,7 @@ import { RoutineItem } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useLightning } from './LightningEffect';
 import { WebCompletionAnimation } from './WebCompletionAnimation';
 
 interface RoutineItemRowProps {
@@ -27,6 +28,7 @@ export const RoutineItemRow: React.FC<RoutineItemRowProps> = ({
 }) => {
   const colors = useTheme();
   const { playSound, triggerHaptic } = useSound();
+  const { triggerLightning } = useLightning();
   const isDone = Boolean(item.completed);
   const [showBurst, setShowBurst] = useState(false);
 
@@ -36,6 +38,7 @@ export const RoutineItemRow: React.FC<RoutineItemRowProps> = ({
     if (!isDone) {
       setShowBurst(true);
       playSound('taskSuccess');
+      triggerLightning({ intensity: 'light' });
       triggerHaptic('success');
     } else {
       playSound('buttonTap');

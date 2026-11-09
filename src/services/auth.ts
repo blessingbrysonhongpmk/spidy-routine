@@ -29,11 +29,15 @@ try {
 }
 export const auth = authInstance;
 
-// Default guest profile
-const DEFAULT_USER: UserProfile = {
-  uid: 'hero_blessing_01',
-  name: 'Blessing',
-  email: 'blessing@spideyflow.app',
+// Default clean blank profile for new installs
+export const BLANK_USER: UserProfile = {
+  uid: 'agent_local',
+  name: '',
+  email: '',
+  callsign: '',
+  heroArchetype: 'spiderman',
+  dailyTarget: 5,
+  motto: '',
   isGuest: true,
 };
 
@@ -41,17 +45,42 @@ export async function getPersistedUser(): Promise<UserProfile> {
   try {
     const raw = await getAppSetting('user_profile', '');
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      return {
+        ...BLANK_USER,
+        ...parsed,
+      };
     }
   } catch {
     // Ignore JSON parse errors
   }
-  return DEFAULT_USER;
+  return BLANK_USER;
 }
 
 export async function persistUser(user: UserProfile): Promise<void> {
   await setAppSetting('user_profile', JSON.stringify(user));
-  await setAppSetting('user_name', user.name);
+  await setAppSetting('user_name', user.name || '');
+  if (user.callsign) {
+    await setAppSetting('user_callsign', user.callsign);
+  }
+  if (user.heroArchetype) {
+    await setAppSetting('hero_archetype', user.heroArchetype);
+  }
+}
+
+export async function updateUserProfile(details: Partial<UserProfile>): Promise<UserProfile> {
+  const current = await getPersistedUser();
+  const updated: UserProfile = {
+    ...current,
+    ...details,
+  };
+  await persistUser(updated);
+  return updated;
+}
+
+export async function resetUserProfileToBlank(): Promise<UserProfile> {
+  await persistUser(BLANK_USER);
+  return BLANK_USER;
 }
 
 export async function loginWithEmail(email: string, pass: string): Promise<UserProfile> {
@@ -155,5 +184,5 @@ export async function logoutUser(): Promise<void> {
     // Offline or guest mode
   }
   // Reset persisted user to default guest mode without touching database tasks/routines!
-  await persistUser(DEFAULT_USER);
+  await persistUser(BLANK_USER);
 }

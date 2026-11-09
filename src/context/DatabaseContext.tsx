@@ -1,4 +1,5 @@
 import {
+  clearAllDataAndReset,
   createRoutine,
   createTask,
   deleteRoutine,
@@ -10,6 +11,7 @@ import {
   getUserStats,
   initDatabase,
   resetDatabase,
+  seedHeroStarterProtocols,
   toggleRoutineItemCompletion,
   toggleTaskComplete,
   updateTask,
@@ -53,6 +55,8 @@ interface DatabaseContextType {
   ) => Promise<string>;
   removeRoutine: (id: string) => Promise<void>;
   resetToSampleData: () => Promise<void>;
+  clearAllData: () => Promise<void>;
+  loadStarterProtocols: () => Promise<void>;
 }
 
 const DatabaseContext = createContext<DatabaseContextType>({} as DatabaseContextType);
@@ -238,6 +242,20 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
     await loadData(selectedDate);
   };
 
+  const handleClearAllData = async () => {
+    await clearAllDataAndReset();
+    playSound('deleteAction');
+    triggerHaptic('heavy');
+    await loadData(selectedDate);
+  };
+
+  const handleLoadStarterProtocols = async () => {
+    await seedHeroStarterProtocols();
+    playSound('thunderMilestone');
+    triggerHaptic('success');
+    await loadData(selectedDate);
+  };
+
   return (
     <DatabaseContext.Provider
       value={{
@@ -259,6 +277,8 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
         addRoutine: handleAddRoutine,
         removeRoutine: handleRemoveRoutine,
         resetToSampleData: handleResetToSampleData,
+        clearAllData: handleClearAllData,
+        loadStarterProtocols: handleLoadStarterProtocols,
       }}>
       {children}
     </DatabaseContext.Provider>

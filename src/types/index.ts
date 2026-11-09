@@ -46,6 +46,10 @@ export interface UserProfile {
   uid: string;
   name: string;
   email: string;
+  callsign?: string;
+  heroArchetype?: 'spiderman' | 'thor' | 'venom' | 'custom';
+  dailyTarget?: number;
+  motto?: string;
   photoURL?: string;
   isGuest: boolean;
 }

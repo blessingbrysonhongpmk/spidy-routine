@@ -1,3 +1,4 @@
+import { ModalHeroProfile } from '@/components/ModalHeroProfile';
 import { SpiderEmblem } from '@/components/SpiderEmblem';
 import { WebBackground } from '@/components/WebBackground';
 import { WebButtonInteraction } from '@/components/WebButtonInteraction';
@@ -29,7 +30,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const colors = useTheme();
   const { themeMode, setThemeMode } = useThemeContext();
-  const { user, logout } = useAuth();
+  const { user, logout, resetProfile } = useAuth();
   const {
     soundEnabled,
     masterVolume,
@@ -40,11 +41,12 @@ export default function SettingsScreen() {
     playSound,
     triggerHaptic,
   } = useSound();
-  const { allTasks, routines, resetToSampleData, userStats } = useDatabase();
+  const { allTasks, routines, clearAllData, loadStarterProtocols, userStats } = useDatabase();
 
   const [introEnabled, setIntroEnabled] = useState(true);
   const [introSoundEnabled, setIntroSoundEnabled] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   useEffect(() => {
     async function loadIntroSettings() {
@@ -107,18 +109,36 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleResetData = () => {
+  const handleClearAllData = () => {
     Alert.alert(
-      'Reset Mission Database',
-      'Reset all tasks and routines back to default superhero sample data?',
+      'Reset to Clean Slate',
+      'Purge all tasks and routines? Your database will be completely fresh and your profile reset to blank.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Reset Data',
+          text: 'Purge & Reset',
           style: 'destructive',
           onPress: async () => {
-            await resetToSampleData();
-            Alert.alert('Restored', 'Database has been restored to default mission protocols.');
+            await clearAllData();
+            await resetProfile();
+            Alert.alert('Clean Slate Initialized', 'All missions cleared and profile reset to blank.');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleLoadStarterPack = () => {
+    Alert.alert(
+      'Load Hero Starter Pack',
+      'Populate your schedule with recommended superhero daily protocols (Morning Patrol, Focus Operations, Evening Recon)?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Load Protocols',
+          onPress: async () => {
+            await loadStarterProtocols();
+            Alert.alert('Loaded', 'Hero Starter Pack added to your routines.');
           },
         },
       ]
@@ -166,9 +186,13 @@ export default function SettingsScreen() {
             </View>
 
             <View style={styles.accountInfo}>
-              <Text style={[styles.accountName, { color: colors.text }]}>{user?.name || 'Blessing'}</Text>
+              <Text style={[styles.accountName, { color: colors.text }]}>
+                {user?.name ? user.name : 'UNREGISTERED OPERATIVE'}
+              </Text>
               <Text style={[styles.accountEmail, { color: colors.textMuted }]}>
-                {user?.email || 'operative@spideyflow.app'}
+                {user?.callsign
+                  ? `Codename: ${user.callsign} • Target: ${user.dailyTarget || 5}/day`
+                  : 'Tap below to configure Hero Dossier'}
               </Text>
               <View style={styles.badgeRow}>
                 <View style={[styles.clearanceBadge, { backgroundColor: colors.secondarySubtle }]}>
@@ -176,6 +200,16 @@ export default function SettingsScreen() {
                     {user?.isGuest ? 'OFFLINE GUEST' : 'AUTHENTICATED'}
                   </Text>
                 </View>
+                <TouchableOpacity
+                  style={[styles.editBadge, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
+                  onPress={() => setProfileModalVisible(true)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="create-outline" size={12} color={colors.primary} />
+                  <Text style={[styles.editBadgeText, { color: colors.primary }]}>
+                    {user?.name ? 'EDIT DOSSIER' : 'INITIALIZE'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -483,16 +517,29 @@ export default function SettingsScreen() {
               <Text style={[styles.statValue, { color: colors.text }]}>{routines.length} protocols</Text>
             </View>
 
-            <WebButtonInteraction
-              style={[styles.resetBtn, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
-              onPress={handleResetData}
-              variant="subtle"
-              sound="deleteAction"
-              haptic="medium"
-            >
-              <Ionicons name="refresh-outline" size={15} color={colors.primary} />
-              <Text style={[styles.resetBtnText, { color: colors.primary }]}>Reset to Default Superhero Data</Text>
-            </WebButtonInteraction>
+            <View style={styles.dataActionsCol}>
+              <WebButtonInteraction
+                style={[styles.resetBtn, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
+                onPress={handleClearAllData}
+                variant="subtle"
+                sound="deleteAction"
+                haptic="medium"
+              >
+                <Ionicons name="trash-outline" size={15} color={colors.primary} />
+                <Text style={[styles.resetBtnText, { color: colors.primary }]}>Purge to Clean Slate (Blank Database)</Text>
+              </WebButtonInteraction>
+
+              <WebButtonInteraction
+                style={[styles.resetBtn, { backgroundColor: colors.secondarySubtle, borderColor: colors.secondaryBorder, marginTop: 8 }]}
+                onPress={handleLoadStarterPack}
+                variant="subtle"
+                sound="thunderMilestone"
+                haptic="medium"
+              >
+                <Ionicons name="download-outline" size={15} color={colors.secondary} />
+                <Text style={[styles.resetBtnText, { color: colors.secondary }]}>Load Superhero Starter Protocols</Text>
+              </WebButtonInteraction>
+            </View>
           </View>
         </View>
 
@@ -507,6 +554,12 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </ScrollView>
+
+      {/* Hero Dossier Edit Modal */}
+      <ModalHeroProfile
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -575,6 +628,8 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginTop: 4,
   },
   clearanceBadge: {
@@ -586,6 +641,23 @@ const styles = StyleSheet.create({
     fontSize: 9.5,
     fontWeight: '700',
     letterSpacing: 0.5,
+  },
+  editBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingVertical: 1,
+    paddingHorizontal: 6,
+    borderRadius: Radii.xs,
+    borderWidth: 0.8,
+  },
+  editBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  dataActionsCol: {
+    marginTop: Spacing.sm,
   },
   logoutBtn: {
     width: 36,

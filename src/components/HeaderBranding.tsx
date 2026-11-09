@@ -5,9 +5,10 @@ import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AnimatedProgress } from './AnimatedProgress';
+import { ModalHeroProfile } from './ModalHeroProfile';
 import { WebButtonInteraction } from './WebButtonInteraction';
 
 interface HeaderBrandingProps {
@@ -33,6 +34,7 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
   const colors = useTheme();
   const { user } = useAuth();
   const { playSound, triggerHaptic } = useSound();
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   const handleNotificationPress = () => {
     playSound('buttonTap');
@@ -43,10 +45,12 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
   const handleProfilePress = () => {
     playSound('buttonTap');
     triggerHaptic('light');
-    router.push('/(tabs)/settings');
+    setProfileModalVisible(true);
   };
 
-  const displayName = user?.name || 'Blessing';
+  const isUnregistered = !user?.name;
+  const displayName = isUnregistered ? 'Agent' : user.name;
+  const heroCodename = user?.callsign || displayName;
 
   return (
     <View style={styles.container}>
@@ -72,7 +76,7 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
           </WebButtonInteraction>
 
           <WebButtonInteraction
-            style={[styles.avatarButton, { borderColor: colors.primary }]}
+            style={[styles.avatarButton, { borderColor: isUnregistered ? colors.accent : colors.primary }]}
             onPress={handleProfilePress}
             variant="icon"
             sound="buttonTap"
@@ -92,10 +96,33 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
       <View style={styles.heroRow}>
         {/* Left Column: Greeting, Subtitle, Date, and Comic Brush Motto */}
         <View style={styles.heroLeftCol}>
-          <Text style={[styles.greetingText, { color: colors.text }]}>
-            Hello, <Text style={{ color: colors.text }}>{displayName}!</Text> 👋
-          </Text>
-          <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>Let&apos;s make today count.</Text>
+          {isUnregistered ? (
+            <TouchableOpacity onPress={() => setProfileModalVisible(true)} activeOpacity={0.8}>
+              <Text style={[styles.greetingText, { color: colors.text }]}>
+                Hello, <Text style={{ color: colors.primary }}>Agent!</Text> 🛡️
+              </Text>
+              <View
+                style={[
+                  styles.setupBadge,
+                  { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder },
+                ]}
+              >
+                <Ionicons name="sparkles" size={11} color={colors.primary} />
+                <Text style={[styles.setupBadgeText, { color: colors.primary }]}>
+                  Setup hero profile
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => setProfileModalVisible(true)} activeOpacity={0.8}>
+              <Text style={[styles.greetingText, { color: colors.text }]}>
+                Hello, <Text style={{ color: colors.primary }}>{heroCodename}!</Text> 👋
+              </Text>
+              <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>
+                {user?.motto || "Let's make today count."}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <View style={styles.dateBadgeRow}>
             <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
@@ -145,6 +172,12 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Hero Profile Setup Modal */}
+      <ModalHeroProfile
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
+      />
     </View>
   );
 };
@@ -159,58 +192,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   brandRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
   },
   brandSpidey: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '900',
-    fontStyle: 'italic',
-    letterSpacing: 1.2,
+    letterSpacing: 2,
   },
   brandFlow: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '900',
-    fontStyle: 'italic',
-    letterSpacing: 1.2,
+    letterSpacing: 2,
   },
   brandDot: {
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    marginLeft: 4,
+    marginLeft: 3,
+    marginBottom: 2,
   },
   topActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 10,
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: Radii.pill,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 38,
+    height: 38,
+    borderRadius: Radii.sm,
     borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
   notificationDot: {
     position: 'absolute',
-    top: 7,
-    right: 8,
+    top: 9,
+    right: 9,
     width: 6,
     height: 6,
     borderRadius: 3,
   },
   avatarButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    overflow: 'hidden',
+    width: 38,
+    height: 38,
+    borderRadius: Radii.sm,
     borderWidth: 1.5,
+    overflow: 'hidden',
   },
   avatarImg: {
     width: '100%',
@@ -220,11 +252,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 2,
-    marginBottom: 4,
+    paddingTop: Spacing.xs,
   },
   heroLeftCol: {
-    flex: 1.15,
+    flex: 1,
     paddingRight: Spacing.sm,
   },
   heroRightCol: {
@@ -236,6 +267,23 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: '800',
     letterSpacing: -0.4,
+  },
+  setupBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: Radii.xs,
+    borderWidth: 1,
+    gap: 4,
+    marginTop: 4,
+    marginBottom: 6,
+  },
+  setupBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   subGreeting: {
     fontSize: 13,

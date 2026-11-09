@@ -1,7 +1,6 @@
 import { Routine, RoutineCategory, RoutineItem, Task } from '@/types';
 import * as Crypto from 'expo-crypto';
 import * as SQLite from 'expo-sqlite';
-import { getTodayDateString } from './dateUtils';
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
 
@@ -72,36 +71,37 @@ export async function initDatabase(): Promise<void> {
     );
   `);
 
-  // Seed default data if routines table is empty
-  const countRow = await db.getFirstAsync<{ count: number }>(
-    'SELECT COUNT(*) as count FROM routines'
-  );
-
-  if (!countRow || countRow.count === 0) {
-    await seedDefaultData(db);
-  }
+  // Ensure default system settings exist (without mocking user data or dummy tasks)
+  await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('sound_enabled', 'true')`);
+  await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('master_volume', '0.8')`);
+  await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('haptics_enabled', 'true')`);
+  await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('theme_mode', 'dark')`);
+  await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('intro_enabled', 'true')`);
+  await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('intro_sound_enabled', 'true')`);
+  await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('intro_has_launched', 'false')`);
+  await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('reduced_motion', 'false')`);
 }
 
-async function seedDefaultData(db: SQLite.SQLiteDatabase): Promise<void> {
+/**
+ * Seed optional superhero starter protocols on demand.
+ */
+export async function seedHeroStarterProtocols(): Promise<void> {
+  const db = getDatabase();
   const allDays = JSON.stringify(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
   const now = new Date().toISOString();
-  const today = getTodayDateString();
 
-  // 1. Morning Routine
+  // 1. Morning Patrol
   const morningId = Crypto.randomUUID();
   await db.runAsync(
     `INSERT INTO routines (id, name, category, repeat_days, is_active, created_at)
      VALUES (?, ?, ?, ?, 1, ?)`,
-    [morningId, 'Suit Up', 'morning', allDays, now]
+    [morningId, 'Morning Patrol', 'morning', allDays, now]
   );
 
   const morningItems = [
-    { title: 'Wake up', time: '05:00 AM' },
-    { title: 'Workout', time: '05:15 AM' },
-    { title: 'Meditation', time: '05:50 AM' },
-    { title: 'Bible Reading', time: '06:05 AM' },
-    { title: 'Get Ready', time: '06:30 AM' },
-    { title: 'College Departure', time: '07:20 AM' },
+    { title: 'Wake Up & Hydrate', time: '06:00 AM' },
+    { title: 'Agility & Physical Training', time: '06:30 AM' },
+    { title: 'Tactical Planning & Review', time: '07:30 AM' },
   ];
 
   for (let i = 0; i < morningItems.length; i++) {
@@ -113,17 +113,17 @@ async function seedDefaultData(db: SQLite.SQLiteDatabase): Promise<void> {
     );
   }
 
-  // 2. Afternoon Routine
+  // 2. Focus Operations
   const afternoonId = Crypto.randomUUID();
   await db.runAsync(
     `INSERT INTO routines (id, name, category, repeat_days, is_active, created_at)
      VALUES (?, ?, ?, ?, 1, ?)`,
-    [afternoonId, 'Mission Mode', 'afternoon', allDays, now]
+    [afternoonId, 'Focus Operations', 'afternoon', allDays, now]
   );
 
   const afternoonItems = [
-    { title: 'Deep Work & Projects', time: '02:00 PM' },
-    { title: 'Nutrition Fuel', time: '01:00 PM' },
+    { title: 'Core Objective Deep Work', time: '01:00 PM' },
+    { title: 'Nutrition & Energy Recharge', time: '02:30 PM' },
   ];
 
   for (let i = 0; i < afternoonItems.length; i++) {
@@ -135,18 +135,17 @@ async function seedDefaultData(db: SQLite.SQLiteDatabase): Promise<void> {
     );
   }
 
-  // 3. Evening Routine
+  // 3. Evening Reset
   const eveningId = Crypto.randomUUID();
   await db.runAsync(
     `INSERT INTO routines (id, name, category, repeat_days, is_active, created_at)
      VALUES (?, ?, ?, ?, 1, ?)`,
-    [eveningId, 'Recharge & Sharpen', 'evening', allDays, now]
+    [eveningId, 'Evening Recon', 'evening', allDays, now]
   );
 
   const eveningItems = [
-    { title: 'Physical Training / Run', time: '06:00 PM' },
-    { title: 'Read & Skill Sharpening', time: '07:30 PM' },
-    { title: 'Dinner & Relax', time: '08:30 PM' },
+    { title: 'Daily Debrief & Log Review', time: '07:00 PM' },
+    { title: 'Gear & Mind Recharge', time: '08:30 PM' },
   ];
 
   for (let i = 0; i < eveningItems.length; i++) {
@@ -157,81 +156,6 @@ async function seedDefaultData(db: SQLite.SQLiteDatabase): Promise<void> {
       [Crypto.randomUUID(), eveningId, item.title, item.time, i]
     );
   }
-
-  // 4. Night Routine
-  const nightId = Crypto.randomUUID();
-  await db.runAsync(
-    `INSERT INTO routines (id, name, category, repeat_days, is_active, created_at)
-     VALUES (?, ?, ?, ?, 1, ?)`,
-    [nightId, 'Reset & Defend', 'night', allDays, now]
-  );
-
-  const nightItems = [
-    { title: "Review Tomorrow's Mission", time: '10:00 PM' },
-    { title: 'Wind Down & Sleep', time: '10:30 PM' },
-  ];
-
-  for (let i = 0; i < nightItems.length; i++) {
-    const item = nightItems[i];
-    await db.runAsync(
-      `INSERT INTO routine_items (id, routine_id, title, scheduled_time, sort_order, is_active)
-       VALUES (?, ?, ?, ?, ?, 1)`,
-      [Crypto.randomUUID(), nightId, item.title, item.time, i]
-    );
-  }
-
-  // Seed sample tasks for today matching the visual layout
-  const sampleTasks = [
-    {
-      title: 'Complete 5 tasks',
-      description: "Today's Primary Mission",
-      time: '09:00',
-      completed: 0,
-    },
-    {
-      title: 'Review System Architecture',
-      description: 'Prepare documentation and QA test suites',
-      time: '11:30',
-      completed: 1,
-    },
-    {
-      title: 'Workout & Core Training',
-      description: 'Strength training routine',
-      time: '17:00',
-      completed: 1,
-    },
-    {
-      title: 'Meditation & Breathwork',
-      description: 'Thor focus protocol',
-      time: '10:00',
-      completed: 1,
-    },
-    {
-      title: 'Push Production Release',
-      description: 'Ship SPIDEY FLOW mobile package',
-      time: '19:00',
-      completed: 0,
-    },
-  ];
-
-  for (const t of sampleTasks) {
-    await db.runAsync(
-      `INSERT INTO tasks (id, title, description, date, time, completed, reminder_enabled, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)`,
-      [Crypto.randomUUID(), t.title, t.description, today, t.time, t.completed, now, now]
-    );
-  }
-
-  // Set default settings
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('sound_enabled', 'true')`);
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('master_volume', '0.8')`);
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('haptics_enabled', 'true')`);
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('theme', 'dark')`);
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('user_name', 'Blessing')`);
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('intro_enabled', 'true')`);
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('intro_sound_enabled', 'true')`);
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('intro_has_launched', 'false')`);
-  await db.runAsync(`INSERT OR REPLACE INTO app_settings (key, value) VALUES ('reduced_motion', 'false')`);
 }
 
 // ==========================================
@@ -628,14 +552,17 @@ export async function setAppSetting(key: string, value: string): Promise<void> {
   }
 }
 
-export async function resetDatabase(): Promise<void> {
+export async function clearAllDataAndReset(): Promise<void> {
   const db = getDatabase();
   await db.execAsync(`
     DELETE FROM routine_completions;
     DELETE FROM routine_items;
     DELETE FROM routines;
     DELETE FROM tasks;
-    DELETE FROM app_settings;
+    DELETE FROM app_settings WHERE key IN ('user_profile', 'user_name', 'user_callsign', 'hero_archetype');
   `);
-  await seedDefaultData(db);
+}
+
+export async function resetDatabase(): Promise<void> {
+  await clearAllDataAndReset();
 }
