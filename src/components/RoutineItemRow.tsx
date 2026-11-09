@@ -1,4 +1,6 @@
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
+import { useSound } from '@/context/SoundContext';
+import { useTheme } from '@/hooks/use-theme';
 import { RoutineItem } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
@@ -20,21 +22,39 @@ interface RoutineItemRowProps {
 export const RoutineItemRow: React.FC<RoutineItemRowProps> = ({
   item,
   onToggle,
-  accentColor = SpideyColors.spideyRed,
+  accentColor,
   onDelete,
 }) => {
+  const colors = useTheme();
+  const { playSound, triggerHaptic } = useSound();
   const isDone = Boolean(item.completed);
   const [showBurst, setShowBurst] = useState(false);
+
+  const activeAccent = accentColor || colors.primary;
 
   const handleToggle = () => {
     if (!isDone) {
       setShowBurst(true);
+      playSound('taskSuccess');
+      triggerHaptic('success');
+    } else {
+      playSound('buttonTap');
+      triggerHaptic('light');
     }
     onToggle(item.id, isDone);
   };
 
   return (
-    <View style={[styles.container, isDone && styles.containerDone]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDone ? colors.inputBackground : colors.surface,
+          borderColor: isDone ? colors.borderSubtle : colors.borderMuted,
+        },
+        isDone && styles.containerDone,
+      ]}
+    >
       {/* 44pt Checkbox Touch Target with Web Burst */}
       <TouchableOpacity
         style={styles.checkboxTouchTarget}
@@ -48,20 +68,22 @@ export const RoutineItemRow: React.FC<RoutineItemRowProps> = ({
         <View
           style={[
             styles.checkbox,
-            { borderColor: isDone ? SpideyColors.success : SpideyColors.borderMuted },
-            isDone && { backgroundColor: SpideyColors.success },
+            { borderColor: isDone ? colors.success : colors.borderMuted },
+            isDone && { backgroundColor: colors.success },
           ]}
         >
-          {isDone && (
-            <Ionicons name="checkmark" size={12} color={SpideyColors.background} />
-          )}
+          {isDone && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
         </View>
       </TouchableOpacity>
 
       {/* Routine Item Title */}
       <View style={styles.content}>
         <Text
-          style={[styles.title, isDone && styles.titleDone]}
+          style={[
+            styles.title,
+            { color: colors.text },
+            isDone && [styles.titleDone, { color: colors.textMuted }],
+          ]}
           numberOfLines={1}
         >
           {item.title}
@@ -70,14 +92,28 @@ export const RoutineItemRow: React.FC<RoutineItemRowProps> = ({
 
       {/* Scheduled Time Pill */}
       {item.scheduled_time ? (
-        <View style={styles.timeBadge}>
+        <View
+          style={[
+            styles.timeBadge,
+            {
+              backgroundColor: colors.inputBackground,
+              borderColor: isDone ? colors.borderSubtle : activeAccent + '40',
+              borderWidth: 1,
+            },
+          ]}
+        >
           <Ionicons
             name="time-outline"
             size={11}
-            color={isDone ? SpideyColors.textDisabled : SpideyColors.textMuted}
+            color={isDone ? colors.textDisabled : activeAccent}
             style={{ marginRight: 3 }}
           />
-          <Text style={[styles.timeText, isDone && styles.timeTextDone]}>
+          <Text
+            style={[
+              styles.timeText,
+              { color: isDone ? colors.textDisabled : colors.textSecondary },
+            ]}
+          >
             {item.scheduled_time}
           </Text>
         </View>
@@ -89,8 +125,9 @@ export const RoutineItemRow: React.FC<RoutineItemRowProps> = ({
           style={styles.deleteBtn}
           onPress={() => onDelete(item.id)}
           accessibilityLabel="Delete routine item"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="trash-outline" size={15} color={SpideyColors.textMuted} />
+          <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
         </TouchableOpacity>
       )}
     </View>
@@ -99,20 +136,16 @@ export const RoutineItemRow: React.FC<RoutineItemRowProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: SpideyColors.surface,
     borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.sm + 2,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs + 2,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   containerDone: {
-    backgroundColor: SpideyColors.inputBackground,
-    borderColor: SpideyColors.borderSubtle,
-    opacity: 0.75,
+    opacity: 0.72,
   },
   checkboxTouchTarget: {
     width: 36,
@@ -122,8 +155,8 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   checkbox: {
-    width: 19,
-    height: 19,
+    width: 20,
+    height: 20,
     borderRadius: 6,
     borderWidth: 1.5,
     justifyContent: 'center',
@@ -131,39 +164,32 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingRight: Spacing.sm,
   },
   title: {
-    color: SpideyColors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
   titleDone: {
-    color: SpideyColors.textMuted,
     textDecorationLine: 'line-through',
   },
   timeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: SpideyColors.inputBackground,
     paddingVertical: 2,
     paddingHorizontal: 7,
     borderRadius: Radii.xs,
-    marginLeft: Spacing.sm,
   },
   timeText: {
-    color: SpideyColors.textMuted,
     fontSize: 11,
     fontWeight: '500',
   },
-  timeTextDone: {
-    color: SpideyColors.textDisabled,
-  },
   deleteBtn: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: Spacing.xs,
+    marginLeft: 6,
   },
 });

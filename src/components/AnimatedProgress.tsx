@@ -1,4 +1,4 @@
-import { SpideyColors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -37,6 +37,7 @@ export const AnimatedProgress: React.FC<AnimatedProgressProps> = ({
   label,
   triggerLightningOnIncrease = true,
 }) => {
+  const colors = useTheme();
   const { triggerLightning } = useLightning();
   const prevPercentageRef = useRef(percentage);
 
@@ -84,8 +85,8 @@ export const AnimatedProgress: React.FC<AnimatedProgressProps> = ({
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <Defs>
           <LinearGradient id="heroProgressGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-            <Stop offset="0%" stopColor={SpideyColors.spideyRed} />
-            <Stop offset="75%" stopColor={SpideyColors.thorBlue} />
+            <Stop offset="0%" stopColor={colors.primary} />
+            <Stop offset="75%" stopColor={colors.secondary} />
             <Stop offset="100%" stopColor="#38BDF8" />
           </LinearGradient>
         </Defs>
@@ -95,7 +96,7 @@ export const AnimatedProgress: React.FC<AnimatedProgressProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={SpideyColors.borderSubtle}
+          stroke={colors.borderSubtle}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -128,15 +129,21 @@ export const AnimatedProgress: React.FC<AnimatedProgressProps> = ({
 
       {/* Center Percentage Display */}
       <View style={styles.centerContent}>
-        <Text style={[styles.percentageText, size >= 95 && styles.largePercentageText]}>
+        <Text
+          style={[
+            styles.percentageText,
+            { color: colors.text },
+            size >= 95 && styles.largePercentageText,
+          ]}
+        >
           {percentage}%
         </Text>
-        {label ? <Text style={styles.labelText}>{label}</Text> : null}
+        {label ? <Text style={[styles.labelText, { color: colors.textMuted }]}>{label}</Text> : null}
         {showIcon && (
           <Ionicons
             name="flash"
             size={size >= 95 ? 12 : 9}
-            color={SpideyColors.thorGold}
+            color={colors.accent}
             style={styles.boltIcon}
           />
         )}
@@ -163,7 +170,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   percentageText: {
-    color: SpideyColors.textPrimary,
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: -0.5,
@@ -174,7 +180,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.8,
   },
   labelText: {
-    color: SpideyColors.textMuted,
     fontSize: 9.5,
     fontWeight: '600',
     marginTop: 1,
@@ -184,4 +189,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-

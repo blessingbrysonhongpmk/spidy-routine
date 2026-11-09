@@ -19,8 +19,8 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 import Svg, { Line } from 'react-native-svg';
-import { SpideyColors } from '@/constants/theme';
-import { playSound, triggerHaptic, SoundEffectType } from '@/services/sound';
+import { useTheme } from '@/hooks/use-theme';
+import { SoundEffectType, playSound, triggerHaptic } from '@/services/sound';
 
 export type WebButtonVariant = 'primary' | 'subtle' | 'tab' | 'compact' | 'icon';
 
@@ -60,6 +60,7 @@ export const WebButtonInteraction: React.FC<WebButtonInteractionProps> = ({
   haptic = 'light',
   sound = 'buttonTap',
 }) => {
+  const colors = useTheme();
   const [isWebShooting, setIsWebShooting] = useState(false);
 
   // Reanimated physics values
@@ -156,7 +157,7 @@ export const WebButtonInteraction: React.FC<WebButtonInteractionProps> = ({
                   y1="0%"
                   x2="50%"
                   y2="50%"
-                  stroke={SpideyColors.spideyRed}
+                  stroke={colors.primary}
                   strokeWidth="2.5"
                   strokeOpacity="0.3"
                   strokeLinecap="round"

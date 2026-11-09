@@ -1,4 +1,5 @@
 import { SpideyColors } from '@/constants/theme';
+import { useThemeContext } from '@/context/ThemeContext';
 import React, { useEffect } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import Animated, {
@@ -79,7 +80,14 @@ export const SymbioteBackground: React.FC<SymbioteBackgroundProps> = ({
     opacity: thorEnergyPulse.value,
   }));
 
+  const { isDark, colors } = useThemeContext();
   const isMinimal = variant === 'minimal';
+  const bgBase = colors.background;
+  const spideyColor = isDark ? '#EF4444' : '#DC2626';
+  const thorColor = isDark ? '#0EA5E9' : '#0284C7';
+  const thorCore = isDark ? '#38BDF8' : '#0284C7';
+  const venomColor = isDark ? '#8B5CF6' : '#7C3AED';
+  const webStroke = isDark ? '#FFFFFF' : '#64748B';
 
   return (
     <View style={styles.container} pointerEvents="none">
@@ -93,36 +101,36 @@ export const SymbioteBackground: React.FC<SymbioteBackgroundProps> = ({
         <Defs>
           {/* Spider-Man Crimson Flare (Top-Left) */}
           <RadialGradient id="spideyCornerGlow" cx="0%" cy="0%" r="65%">
-            <Stop offset="0%" stopColor="#EF4444" stopOpacity={isMinimal ? 0.08 : 0.22} />
-            <Stop offset="50%" stopColor="#DC2626" stopOpacity={isMinimal ? 0.04 : 0.10} />
-            <Stop offset="100%" stopColor="#07080A" stopOpacity="0" />
+            <Stop offset="0%" stopColor={spideyColor} stopOpacity={isDark ? (isMinimal ? 0.08 : 0.22) : 0.10} />
+            <Stop offset="50%" stopColor={spideyColor} stopOpacity={isDark ? (isMinimal ? 0.04 : 0.10) : 0.04} />
+            <Stop offset="100%" stopColor={bgBase} stopOpacity="0" />
           </RadialGradient>
 
           {/* Thor Electric Blue Atmospheric Light (Top-Right) */}
           <RadialGradient id="thorCornerGlow" cx="100%" cy="5%" r="70%">
-            <Stop offset="0%" stopColor="#0EA5E9" stopOpacity={isMinimal ? 0.09 : 0.24} />
-            <Stop offset="45%" stopColor="#38BDF8" stopOpacity={isMinimal ? 0.05 : 0.12} />
-            <Stop offset="100%" stopColor="#07080A" stopOpacity="0" />
+            <Stop offset="0%" stopColor={thorColor} stopOpacity={isDark ? (isMinimal ? 0.09 : 0.24) : 0.12} />
+            <Stop offset="45%" stopColor={thorCore} stopOpacity={isDark ? (isMinimal ? 0.05 : 0.12) : 0.05} />
+            <Stop offset="100%" stopColor={bgBase} stopOpacity="0" />
           </RadialGradient>
 
           {/* Venom Deep Purple Organic Tendril Ambient (Bottom and Edges) */}
           <RadialGradient id="venomSymbioteGlow" cx="90%" cy="60%" r="65%">
-            <Stop offset="0%" stopColor="#8B5CF6" stopOpacity={isMinimal ? 0.06 : 0.16} />
-            <Stop offset="50%" stopColor="#5B21B6" stopOpacity={isMinimal ? 0.03 : 0.08} />
-            <Stop offset="100%" stopColor="#07080A" stopOpacity="0" />
+            <Stop offset="0%" stopColor={venomColor} stopOpacity={isDark ? (isMinimal ? 0.06 : 0.16) : 0.08} />
+            <Stop offset="50%" stopColor={venomColor} stopOpacity={isDark ? (isMinimal ? 0.03 : 0.08) : 0.03} />
+            <Stop offset="100%" stopColor={bgBase} stopOpacity="0" />
           </RadialGradient>
 
           {/* Bottom Left Web Corner Glow */}
           <RadialGradient id="spideyBottomLeftGlow" cx="0%" cy="100%" r="50%">
-            <Stop offset="0%" stopColor="#EF4444" stopOpacity={isMinimal ? 0.05 : 0.14} />
-            <Stop offset="100%" stopColor="#07080A" stopOpacity="0" />
+            <Stop offset="0%" stopColor={spideyColor} stopOpacity={isDark ? (isMinimal ? 0.05 : 0.14) : 0.06} />
+            <Stop offset="100%" stopColor={bgBase} stopOpacity="0" />
           </RadialGradient>
 
           {/* Bottom Obsidian Vignette */}
           <LinearGradient id="venomObsidianDusk" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0%" stopColor="#0B0C0E" stopOpacity="0" />
-            <Stop offset="65%" stopColor="#0B0C0E" stopOpacity="0.3" />
-            <Stop offset="100%" stopColor="#050507" stopOpacity="0.95" />
+            <Stop offset="0%" stopColor={bgBase} stopOpacity="0" />
+            <Stop offset="65%" stopColor={bgBase} stopOpacity={isDark ? 0.3 : 0.2} />
+            <Stop offset="100%" stopColor={bgBase} stopOpacity={isDark ? 0.95 : 0.85} />
           </LinearGradient>
         </Defs>
 
@@ -135,20 +143,20 @@ export const SymbioteBackground: React.FC<SymbioteBackgroundProps> = ({
 
         {/* 2. SPIDER-MAN: Precision Hairline Corner Web Geometry */}
         {showWebs && (
-          <G stroke="#EF4444" strokeOpacity={isMinimal ? 0.08 : 0.18} strokeWidth="1">
+          <G stroke={spideyColor} strokeOpacity={isDark ? (isMinimal ? 0.08 : 0.18) : 0.12} strokeWidth="1">
             {/* Top-Left Web Main Radial Lines */}
-            <Path d="M0 0 L210 240" stroke="#FFFFFF" strokeOpacity={0.12} />
+            <Path d="M0 0 L210 240" stroke={webStroke} strokeOpacity={isDark ? 0.12 : 0.18} />
             <Path d="M0 0 L270 160" />
             <Path d="M0 0 L310 80" />
             <Path d="M0 0 L120 310" />
             <Path d="M0 0 L50 340" />
 
             {/* Web Concentric Connectors */}
-            <Path d="M35 45 Q 46 36 55 14" stroke="#FFFFFF" strokeOpacity={0.10} />
+            <Path d="M35 45 Q 46 36 55 14" stroke={webStroke} strokeOpacity={isDark ? 0.10 : 0.15} />
             <Path d="M70 90 Q 92 72 110 28" />
-            <Path d="M110 140 Q 142 110 170 44" stroke="#FFFFFF" strokeOpacity={0.10} />
+            <Path d="M110 140 Q 142 110 170 44" stroke={webStroke} strokeOpacity={isDark ? 0.10 : 0.15} />
             <Path d="M150 190 Q 192 148 230 60" />
-            <Path d="M190 235 Q 242 185 285 76" stroke="#FFFFFF" strokeOpacity={0.08} />
+            <Path d="M190 235 Q 242 185 285 76" stroke={webStroke} strokeOpacity={isDark ? 0.08 : 0.12} />
 
             {/* Bottom-Left Web Mesh */}
             <Path d="M0 900 L140 760" strokeOpacity={0.12} />
@@ -165,30 +173,30 @@ export const SymbioteBackground: React.FC<SymbioteBackgroundProps> = ({
             {/* Primary Blue Lightning Branch */}
             <Path
               d={`M${SCREEN_WIDTH - 20} 0 L${SCREEN_WIDTH - 65} 55 L${SCREEN_WIDTH - 48} 72 L${SCREEN_WIDTH - 110} 145 L${SCREEN_WIDTH - 92} 162 L${SCREEN_WIDTH - 145} 230`}
-              stroke="#38BDF8"
+              stroke={thorCore}
               strokeWidth="1.6"
-              strokeOpacity={isMinimal ? 0.15 : 0.35}
+              strokeOpacity={isDark ? (isMinimal ? 0.15 : 0.35) : 0.25}
             />
             {/* White-Hot Core Streak */}
             <Path
               d={`M${SCREEN_WIDTH - 20} 0 L${SCREEN_WIDTH - 65} 55 L${SCREEN_WIDTH - 48} 72 L${SCREEN_WIDTH - 110} 145`}
-              stroke="#E0F2FE"
+              stroke={isDark ? '#E0F2FE' : '#BAE6FD'}
               strokeWidth="0.8"
-              strokeOpacity={isMinimal ? 0.2 : 0.5}
+              strokeOpacity={isDark ? (isMinimal ? 0.2 : 0.5) : 0.35}
             />
             {/* Fork 1 */}
             <Path
               d={`M${SCREEN_WIDTH - 65} 55 L${SCREEN_WIDTH - 105} 75 L${SCREEN_WIDTH - 120} 110`}
-              stroke="#0EA5E9"
+              stroke={thorColor}
               strokeWidth="1.1"
-              strokeOpacity={0.25}
+              strokeOpacity={isDark ? 0.25 : 0.20}
             />
             {/* Fork 2 */}
             <Path
               d={`M${SCREEN_WIDTH - 110} 145 L${SCREEN_WIDTH - 150} 160 L${SCREEN_WIDTH - 170} 195`}
-              stroke="#0EA5E9"
+              stroke={thorColor}
               strokeWidth="1.0"
-              strokeOpacity={0.25}
+              strokeOpacity={isDark ? 0.25 : 0.20}
             />
           </G>
         )}
@@ -198,33 +206,43 @@ export const SymbioteBackground: React.FC<SymbioteBackgroundProps> = ({
       {showSymbiote && (
         <Animated.View style={[StyleSheet.absoluteFill, animatedSymbioteStyle]} pointerEvents="none">
           <Svg width="100%" height="100%" viewBox={`0 0 ${SCREEN_WIDTH} 900`} fill="none">
+            <Path
+              d={`M${SCREEN_WIDTH} 120 Q ${SCREEN_WIDTH - 25} 180 ${SCREEN_WIDTH - 15} 240 T ${SCREEN_WIDTH - 20} 340 T ${SCREEN_WIDTH} 420 Z`}
+              fill={isDark ? '#090A0D' : '#E2E8F0'}
+              opacity={isDark ? (isMinimal ? 0.35 : 0.65) : 0.35}
+            />
+            <Path
+              d={`M0 450 Q 25 520 12 590 T 20 700 T 0 780 Z`}
+              fill={isDark ? '#090A0D' : '#E2E8F0'}
+              opacity={isDark ? (isMinimal ? 0.3 : 0.55) : 0.30}
+            />
             {/* Smooth organic Bezier curves framing bottom edges (Symbiote tendril silhouette) */}
             <Path
               d={`M0 820 Q 40 760 90 790 T 170 760 Q 230 730 270 820 T ${SCREEN_WIDTH} 850 V 900 H 0 Z`}
-              fill="#8B5CF6"
-              fillOpacity="0.05"
+              fill={isDark ? '#8B5CF6' : '#7C3AED'}
+              fillOpacity={isDark ? 0.05 : 0.03}
             />
             {/* Fine organic flowing hair-tendrils along the right screen margin */}
             <Path
               d={`M${SCREEN_WIDTH} 250 Q ${SCREEN_WIDTH - 40} 300 ${SCREEN_WIDTH - 20} 360 T ${SCREEN_WIDTH - 35} 430 T ${SCREEN_WIDTH} 490`}
-              stroke="#A855F7"
+              stroke={isDark ? '#A855F7' : '#9333EA'}
               strokeWidth="1.2"
-              strokeOpacity="0.12"
+              strokeOpacity={isDark ? 0.12 : 0.08}
               fill="none"
             />
             <Path
               d={`M${SCREEN_WIDTH} 520 Q ${SCREEN_WIDTH - 50} 580 ${SCREEN_WIDTH - 25} 640 T ${SCREEN_WIDTH - 45} 720 T ${SCREEN_WIDTH} 790`}
-              stroke="#C084FC"
+              stroke={isDark ? '#C084FC' : '#A855F7'}
               strokeWidth="1.0"
-              strokeOpacity="0.10"
+              strokeOpacity={isDark ? 0.10 : 0.06}
               fill="none"
             />
             {/* Left subtle tendril */}
             <Path
               d="M0 650 Q 30 685 15 725 T 40 775 T 0 815"
-              stroke="#8B5CF6"
+              stroke={isDark ? '#8B5CF6' : '#7C3AED'}
               strokeWidth="1.0"
-              strokeOpacity="0.10"
+              strokeOpacity={isDark ? 0.10 : 0.06}
               fill="none"
             />
           </Svg>

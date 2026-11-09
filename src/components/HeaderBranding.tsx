@@ -1,6 +1,7 @@
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useSound } from '@/context/SoundContext';
+import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
@@ -19,7 +20,6 @@ interface HeaderBrandingProps {
 /**
  * HeaderBranding:
  * Signature superhero mission dashboard hero section.
- * Aligned 100% with reference mockup media_1793517437380_64339483.jpg.
  * Features stylized comic SPIDEY FLOW branding, personal greeting, dynamic red brush
  * "RISE. TRAIN. CONQUER." motto, streak tracker, and dual-arc progress ring.
  */
@@ -30,6 +30,7 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
   onProgressPress,
 }) => {
   const router = useRouter();
+  const colors = useTheme();
   const { user } = useAuth();
   const { playSound, triggerHaptic } = useSound();
 
@@ -52,26 +53,26 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
       {/* Top Application Bar */}
       <View style={styles.topBar}>
         <View style={styles.brandRow}>
-          <Text style={styles.brandSpidey}>SPIDEY </Text>
-          <Text style={styles.brandFlow}>FLOW</Text>
-          <View style={styles.brandDot} />
+          <Text style={[styles.brandSpidey, { color: colors.text }]}>SPIDEY </Text>
+          <Text style={[styles.brandFlow, { color: colors.primary }]}>FLOW</Text>
+          <View style={[styles.brandDot, { backgroundColor: colors.primary }]} />
         </View>
 
         <View style={styles.topActions}>
           <WebButtonInteraction
-            style={styles.iconButton}
+            style={[styles.iconButton, { backgroundColor: colors.surface, borderColor: colors.borderSubtle }]}
             onPress={handleNotificationPress}
             variant="icon"
             sound="buttonTap"
             haptic="light"
             accessibilityLabel="Notifications"
           >
-            <Ionicons name="notifications-outline" size={19} color={SpideyColors.textSecondary} />
-            <View style={styles.notificationDot} />
+            <Ionicons name="notifications-outline" size={19} color={colors.textSecondary} />
+            <View style={[styles.notificationDot, { backgroundColor: colors.primary }]} />
           </WebButtonInteraction>
 
           <WebButtonInteraction
-            style={styles.avatarButton}
+            style={[styles.avatarButton, { borderColor: colors.primary }]}
             onPress={handleProfilePress}
             variant="icon"
             sound="buttonTap"
@@ -91,27 +92,35 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
       <View style={styles.heroRow}>
         {/* Left Column: Greeting, Subtitle, Date, and Comic Brush Motto */}
         <View style={styles.heroLeftCol}>
-          <Text style={styles.greetingText}>
-            Hello, <Text style={styles.greetingName}>{displayName}!</Text> 👋
+          <Text style={[styles.greetingText, { color: colors.text }]}>
+            Hello, <Text style={{ color: colors.text }}>{displayName}!</Text> 👋
           </Text>
-          <Text style={styles.subGreeting}>Let&apos;s make today count.</Text>
+          <Text style={[styles.subGreeting, { color: colors.textSecondary }]}>Let&apos;s make today count.</Text>
 
           <View style={styles.dateBadgeRow}>
-            <Ionicons name="calendar-outline" size={12} color={SpideyColors.textMuted} />
-            <Text style={styles.dateLabel}>{dateHeader}</Text>
+            <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
+            <Text style={[styles.dateLabel, { color: colors.textMuted }]}>{dateHeader}</Text>
           </View>
 
           {/* Bold Comic-Brush Motivational Motto */}
           <View style={styles.mottoWrapper}>
-            <Text style={styles.mottoLine1}>RISE. TRAIN.</Text>
-            <Text style={styles.mottoLine2}>CONQUER.</Text>
+            <Text style={[styles.mottoLine1, { color: colors.primary }]}>RISE. TRAIN.</Text>
+            <Text style={[styles.mottoLine2, { color: colors.primary }]}>CONQUER.</Text>
           </View>
 
           {/* Active Streak Badge */}
           {streakDays > 0 && (
-            <View style={styles.streakBadge}>
+            <View
+              style={[
+                styles.streakBadge,
+                {
+                  backgroundColor: colors.primarySubtle,
+                  borderColor: colors.primaryBorder,
+                },
+              ]}
+            >
               <Text style={styles.streakFire}>🔥</Text>
-              <Text style={styles.streakText}>
+              <Text style={[styles.streakText, { color: colors.primary }]}>
                 {streakDays} {streakDays === 1 ? 'DAY' : 'DAYS'} STREAK
               </Text>
             </View>
@@ -160,21 +169,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '900',
     fontStyle: 'italic',
-    color: '#FFFFFF',
     letterSpacing: 1.2,
   },
   brandFlow: {
     fontSize: 18,
     fontWeight: '900',
     fontStyle: 'italic',
-    color: SpideyColors.spideyRed,
     letterSpacing: 1.2,
   },
   brandDot: {
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: SpideyColors.spideyRed,
     marginLeft: 4,
   },
   topActions: {
@@ -186,11 +192,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Radii.pill,
-    backgroundColor: SpideyColors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
     position: 'relative',
   },
   notificationDot: {
@@ -200,16 +204,13 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: SpideyColors.spideyRed,
   },
   avatarButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: SpideyColors.surfaceElevated,
     borderWidth: 1.5,
-    borderColor: SpideyColors.spideyRed,
   },
   avatarImg: {
     width: '100%',
@@ -232,16 +233,11 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.xs,
   },
   greetingText: {
-    color: SpideyColors.textPrimary,
     fontSize: 21,
     fontWeight: '800',
     letterSpacing: -0.4,
   },
-  greetingName: {
-    color: SpideyColors.textPrimary,
-  },
   subGreeting: {
-    color: SpideyColors.textSecondary,
     fontSize: 13,
     fontWeight: '500',
     marginTop: 2,
@@ -254,7 +250,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   dateLabel: {
-    color: SpideyColors.textMuted,
     fontSize: 11.5,
     fontWeight: '600',
     letterSpacing: 0.1,
@@ -264,44 +259,33 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-6deg' }],
   },
   mottoLine1: {
-    color: SpideyColors.spideyRed,
     fontSize: 19,
     fontWeight: '900',
     fontStyle: 'italic',
     letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
   mottoLine2: {
-    color: SpideyColors.spideyRed,
     fontSize: 23,
     fontWeight: '900',
     fontStyle: 'italic',
     letterSpacing: 1.2,
     marginTop: -2,
-    textShadowColor: 'rgba(0, 0, 0, 0.8)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
   },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: Radii.xs,
     gap: 4,
     marginTop: 6,
     borderWidth: 0.8,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   streakFire: {
     fontSize: 11,
   },
   streakText: {
-    color: SpideyColors.spideyRed,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,

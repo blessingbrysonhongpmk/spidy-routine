@@ -1,8 +1,9 @@
 import { useLightning } from '@/components/LightningEffect';
 import { WebButtonInteraction } from '@/components/WebButtonInteraction';
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
 import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
+import { useTheme } from '@/hooks/use-theme';
 import { getTodayDateString } from '@/services/dateUtils';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -21,6 +22,7 @@ import {
 
 export default function ModalTaskScreen() {
   const router = useRouter();
+  const colors = useTheme();
   const params = useLocalSearchParams<{ id?: string; initialDate?: string }>();
   const { tasks, allTasks, addTask, editTask, selectedDate } = useDatabase();
   const { playSound, triggerHaptic } = useSound();
@@ -45,11 +47,13 @@ export default function ModalTaskScreen() {
 
   const handleQuickDate = (targetDate: string) => {
     playSound('buttonTap');
+    triggerHaptic('light');
     setDate(targetDate);
   };
 
   const handleQuickTime = (presetTime: string) => {
     playSound('buttonTap');
+    triggerHaptic('light');
     setTime(presetTime);
   };
 
@@ -92,19 +96,20 @@ export default function ModalTaskScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.keyboardContainer}
+      style={[styles.keyboardContainer, { backgroundColor: colors.background }]}
     >
-      <View style={styles.modalSheet}>
+      <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
         {/* Header Bar */}
-        <View style={styles.header}>
+        <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
           <TouchableOpacity
             onPress={() => router.back()}
             style={styles.cancelBtn}
             accessibilityLabel="Close"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="close" size={22} color={SpideyColors.textSecondary} />
+            <Ionicons name="close" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
             {isEditing ? 'EDIT MISSION' : 'NEW MISSION TASK'}
           </Text>
           <View style={{ width: 22 }} />
@@ -113,11 +118,18 @@ export default function ModalTaskScreen() {
         <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
           {/* Title Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>MISSION TITLE *</Text>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>MISSION TITLE *</Text>
             <TextInput
-              style={styles.textInput}
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.borderSubtle,
+                  color: colors.text,
+                },
+              ]}
               placeholder="e.g. Strength Training Session / Review Protocol"
-              placeholderTextColor={SpideyColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={title}
               onChangeText={setTitle}
               autoFocus={!isEditing}
@@ -126,11 +138,19 @@ export default function ModalTaskScreen() {
 
           {/* Description Input */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>TACTICAL BRIEFING (OPTIONAL)</Text>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>TACTICAL BRIEFING (OPTIONAL)</Text>
             <TextInput
-              style={[styles.textInput, styles.textArea]}
+              style={[
+                styles.textInput,
+                styles.textArea,
+                {
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.borderSubtle,
+                  color: colors.text,
+                },
+              ]}
               placeholder="Add checklist details or operational notes..."
-              placeholderTextColor={SpideyColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -141,57 +161,102 @@ export default function ModalTaskScreen() {
           {/* Date & Quick Presets */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Text style={styles.inputLabel}>SCHEDULED DATE (YYYY-MM-DD)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>SCHEDULED DATE (YYYY-MM-DD)</Text>
               <View style={styles.presetsRow}>
                 <TouchableOpacity
-                  style={[styles.presetBtn, date === todayStr && styles.presetBtnActive]}
+                  style={[
+                    styles.presetBtn,
+                    {
+                      backgroundColor: date === todayStr ? colors.primarySubtle : colors.inputBackground,
+                      borderColor: date === todayStr ? colors.primary : colors.borderSubtle,
+                    },
+                  ]}
                   onPress={() => handleQuickDate(todayStr)}
                 >
-                  <Text style={[styles.presetBtnText, date === todayStr && styles.presetBtnTextActive]}>
+                  <Text
+                    style={[
+                      styles.presetBtnText,
+                      { color: date === todayStr ? colors.primary : colors.textMuted },
+                    ]}
+                  >
                     Today
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
             <TextInput
-              style={styles.textInput}
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.borderSubtle,
+                  color: colors.text,
+                },
+              ]}
               value={date}
               onChangeText={setDate}
-              placeholder="2026-11-02"
-              placeholderTextColor={SpideyColors.textMuted}
+              placeholder="2026-11-09"
+              placeholderTextColor={colors.textMuted}
             />
           </View>
 
           {/* Time & Quick Presets */}
           <View style={styles.inputGroup}>
             <View style={styles.labelRow}>
-              <Text style={styles.inputLabel}>TIME (HH:MM)</Text>
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>TIME (HH:MM)</Text>
               <View style={styles.presetsRow}>
-                {['09:00', '14:00', '18:00'].map((preset) => (
-                  <TouchableOpacity
-                    key={preset}
-                    style={[styles.presetBtn, time === preset && styles.presetBtnActive]}
-                    onPress={() => handleQuickTime(preset)}
-                  >
-                    <Text style={[styles.presetBtnText, time === preset && styles.presetBtnTextActive]}>
-                      {preset}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {['09:00', '14:00', '18:00', '21:00'].map((preset) => {
+                  const isActive = time === preset;
+                  return (
+                    <TouchableOpacity
+                      key={preset}
+                      style={[
+                        styles.presetBtn,
+                        {
+                          backgroundColor: isActive ? colors.primarySubtle : colors.inputBackground,
+                          borderColor: isActive ? colors.primary : colors.borderSubtle,
+                        },
+                      ]}
+                      onPress={() => handleQuickTime(preset)}
+                    >
+                      <Text
+                        style={[
+                          styles.presetBtnText,
+                          { color: isActive ? colors.primary : colors.textMuted },
+                        ]}
+                      >
+                        {preset}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
             <TextInput
-              style={styles.textInput}
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.borderSubtle,
+                  color: colors.text,
+                },
+              ]}
               value={time}
               onChangeText={setTime}
               placeholder="10:00"
-              placeholderTextColor={SpideyColors.textMuted}
+              placeholderTextColor={colors.textMuted}
             />
           </View>
 
           {/* Reminder Toggle */}
           <TouchableOpacity
-            style={styles.toggleRow}
+            style={[
+              styles.toggleRow,
+              {
+                backgroundColor: colors.inputBackground,
+                borderColor: colors.borderSubtle,
+              },
+            ]}
             onPress={() => setReminderEnabled(!reminderEnabled)}
             activeOpacity={0.8}
           >
@@ -199,18 +264,20 @@ export default function ModalTaskScreen() {
               <Ionicons
                 name="notifications-outline"
                 size={19}
-                color={reminderEnabled ? SpideyColors.spideyRed : SpideyColors.textMuted}
+                color={reminderEnabled ? colors.primary : colors.textMuted}
               />
               <View style={styles.toggleTextCol}>
-                <Text style={styles.toggleTitle}>Mission Alert Reminder</Text>
-                <Text style={styles.toggleSub}>Receive a notification when it&apos;s time</Text>
+                <Text style={[styles.toggleTitle, { color: colors.text }]}>Mission Alert Reminder</Text>
+                <Text style={[styles.toggleSub, { color: colors.textMuted }]}>
+                  Receive a notification when it&apos;s time
+                </Text>
               </View>
             </View>
 
             <View
               style={[
                 styles.switchTrack,
-                reminderEnabled && styles.switchTrackActive,
+                { backgroundColor: reminderEnabled ? colors.primary : colors.borderMuted },
               ]}
             >
               <View
@@ -224,7 +291,7 @@ export default function ModalTaskScreen() {
 
           {/* Save Action Button with Web Pull */}
           <WebButtonInteraction
-            style={styles.saveBtn}
+            style={[styles.saveBtn, { backgroundColor: colors.primary }]}
             onPress={handleSave}
             variant="primary"
             sound="buttonTap"
@@ -243,11 +310,9 @@ export default function ModalTaskScreen() {
 const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
-    backgroundColor: SpideyColors.background,
   },
   modalSheet: {
     flex: 1,
-    backgroundColor: SpideyColors.surface,
     paddingTop: Spacing.md,
     paddingHorizontal: Spacing.xl,
   },
@@ -257,15 +322,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: SpideyColors.borderSubtle,
   },
   cancelBtn: {
     padding: Spacing.xs,
   },
   headerTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 1,
   },
   formScroll: {
@@ -282,8 +345,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   inputLabel: {
-    color: SpideyColors.textMuted,
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
     letterSpacing: 0.8,
     marginBottom: Spacing.xs,
@@ -293,31 +355,18 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   presetBtn: {
-    backgroundColor: SpideyColors.inputBackground,
     paddingVertical: 2,
     paddingHorizontal: 7,
     borderRadius: Radii.xs,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
-  },
-  presetBtnActive: {
-    borderColor: SpideyColors.spideyRed,
-    backgroundColor: SpideyColors.spideyRedSubtle,
   },
   presetBtnText: {
-    color: SpideyColors.textMuted,
     fontSize: 10,
     fontWeight: '600',
   },
-  presetBtnTextActive: {
-    color: SpideyColors.spideyRed,
-  },
   textInput: {
-    backgroundColor: SpideyColors.inputBackground,
     borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
-    color: SpideyColors.textPrimary,
     paddingHorizontal: Spacing.md,
     paddingVertical: 11,
     fontSize: 14,
@@ -330,10 +379,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: SpideyColors.inputBackground,
     borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.xl,
@@ -347,12 +394,10 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   toggleTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 13,
     fontWeight: '600',
   },
   toggleSub: {
-    color: SpideyColors.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
@@ -360,12 +405,8 @@ const styles = StyleSheet.create({
     width: 42,
     height: 24,
     borderRadius: 12,
-    backgroundColor: SpideyColors.borderMuted,
     padding: 2,
     justifyContent: 'center',
-  },
-  switchTrackActive: {
-    backgroundColor: SpideyColors.spideyRed,
   },
   switchThumb: {
     width: 20,
@@ -379,7 +420,6 @@ const styles = StyleSheet.create({
   saveBtn: {
     height: 48,
     borderRadius: Radii.sm,
-    backgroundColor: SpideyColors.spideyRed,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xxxl,
@@ -387,7 +427,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 1,
   },
 });

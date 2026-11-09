@@ -1,7 +1,9 @@
-import { Radii, SpideyColors } from '@/constants/theme';
+import { Radii } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLightning } from './LightningEffect';
 import { SpiderEmblem } from './SpiderEmblem';
 import { WebButtonInteraction } from './WebButtonInteraction';
@@ -10,8 +12,8 @@ const { width } = Dimensions.get('window');
 
 /**
  * CustomTabBar:
- * Understated, precision-engineered bottom navigation bar.
- * Features signature Spider-Man web-pull interactions on tab switch, laser-etched Spider emblem, and Thor electric highlights.
+ * Precision-engineered bottom navigation bar uniting Spider-Man, Thor, and Venom.
+ * Features signature web-pull interactions, illuminated spider hallmark, and electric state feedback.
  */
 export const CustomTabBar: React.FC<any> = ({
   state,
@@ -19,6 +21,8 @@ export const CustomTabBar: React.FC<any> = ({
   navigation,
   navigateToTab,
 }) => {
+  const colors = useTheme();
+  const insets = useSafeAreaInsets();
   const { triggerLightning } = useLightning();
 
   const getIconName = (routeName: string, isFocused: boolean) => {
@@ -26,7 +30,9 @@ export const CustomTabBar: React.FC<any> = ({
       case 'index':
         return isFocused ? 'home' : 'home-outline';
       case 'routine':
-        return isFocused ? 'barbell' : 'barbell-outline';
+        return isFocused ? 'time' : 'time-outline';
+      case 'tasks':
+        return isFocused ? 'checkbox' : 'checkbox-outline';
       case 'calendar':
         return isFocused ? 'calendar' : 'calendar-outline';
       case 'settings':
@@ -42,6 +48,8 @@ export const CustomTabBar: React.FC<any> = ({
         return 'Today';
       case 'routine':
         return 'Routine';
+      case 'tasks':
+        return 'Tasks';
       case 'calendar':
         return 'Calendar';
       case 'settings':
@@ -51,14 +59,25 @@ export const CustomTabBar: React.FC<any> = ({
     }
   };
 
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'android' ? 8 : 12);
+
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, { backgroundColor: colors.background }]}>
       {/* Precision Spider Emblem Centered Above Tab Bar */}
       <View style={styles.spiderEmblemContainer} pointerEvents="none">
-        <SpiderEmblem size={30} color={SpideyColors.borderMuted} opacity={0.4} />
+        <SpiderEmblem size={26} color={colors.borderMuted} opacity={0.65} />
       </View>
 
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.tabBarBackground,
+            borderTopColor: colors.tabBarBorder,
+            paddingBottom: bottomPadding,
+          },
+        ]}
+      >
         {state.routes.map((route: any, index: number) => {
           const isFocused = state.index === index;
           const iconName = getIconName(route.name, isFocused);
@@ -102,22 +121,43 @@ export const CustomTabBar: React.FC<any> = ({
               accessibilityState={{ selected: isFocused }}
               accessibilityLabel={label}
             >
-              <Ionicons
-                name={iconName as any}
-                size={20}
-                color={isFocused ? SpideyColors.spideyRed : SpideyColors.textMuted}
-              />
+              <View style={styles.iconWrapper}>
+                <Ionicons
+                  name={iconName as any}
+                  size={20}
+                  color={isFocused ? colors.primary : colors.textMuted}
+                />
+                {isFocused && (
+                  <View
+                    style={[
+                      styles.iconGlow,
+                      { backgroundColor: colors.primarySubtle },
+                    ]}
+                  />
+                )}
+              </View>
+
               <Text
                 style={[
                   styles.tabLabel,
-                  isFocused && styles.tabLabelFocused,
+                  {
+                    color: isFocused ? colors.primary : colors.textMuted,
+                    fontWeight: isFocused ? '800' : '500',
+                  },
                 ]}
               >
                 {label}
               </Text>
 
-              {/* Refined 4px Active Dot Indicator */}
-              {isFocused && <View style={styles.activeDot} />}
+              {/* Refined Active Dot Indicator */}
+              {isFocused && (
+                <View
+                  style={[
+                    styles.activeDot,
+                    { backgroundColor: colors.primary },
+                  ]}
+                />
+              )}
             </WebButtonInteraction>
           );
         })}
@@ -128,48 +168,52 @@ export const CustomTabBar: React.FC<any> = ({
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: SpideyColors.background,
     position: 'relative',
   },
   spiderEmblemContainer: {
     position: 'absolute',
-    top: -15,
-    left: width / 2 - 15,
+    top: -13,
+    left: width / 2 - 13,
     zIndex: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   container: {
     flexDirection: 'row',
-    height: 60,
-    backgroundColor: SpideyColors.surface,
     borderTopWidth: 1,
-    borderTopColor: SpideyColors.borderSubtle,
-    paddingBottom: 4,
-    paddingTop: 6,
+    paddingTop: 8,
   },
   tabButton: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+    paddingVertical: 2,
+  },
+  iconWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 28,
+    height: 28,
+  },
+  iconGlow: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: Radii.pill,
+    zIndex: -1,
   },
   tabLabel: {
-    fontSize: 10.5,
-    fontWeight: '500',
-    color: SpideyColors.textMuted,
-    marginTop: 3,
-  },
-  tabLabelFocused: {
-    color: SpideyColors.spideyRed,
-    fontWeight: '700',
+    fontSize: 10,
+    letterSpacing: 0.2,
+    marginTop: 2,
   },
   activeDot: {
     position: 'absolute',
-    bottom: -2,
+    bottom: -4,
     width: 4,
     height: 4,
     borderRadius: Radii.pill,
-    backgroundColor: SpideyColors.spideyRed,
   },
 });

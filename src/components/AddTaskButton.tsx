@@ -1,4 +1,5 @@
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -11,10 +12,12 @@ interface AddTaskButtonProps {
 
 /**
  * AddTaskButton:
- * Glowing crimson pill button matching mockup media_1793517437380_64339483.jpg.
- * Features hairline web patterns, intense red neon drop glow, and web-pull physics.
+ * Signature superhero pill action button.
+ * Features hairline web patterns, energetic drop glow, and web-pull physics.
  */
 export const AddTaskButton: React.FC<AddTaskButtonProps> = ({ onPress }) => {
+  const colors = useTheme();
+
   return (
     <View style={styles.container}>
       <WebButtonInteraction
@@ -23,7 +26,7 @@ export const AddTaskButton: React.FC<AddTaskButtonProps> = ({ onPress }) => {
         haptic="medium"
         sound="webShoot"
         accessibilityLabel="Add Task"
-        style={styles.button}
+        style={[styles.button, { backgroundColor: colors.primary }]}
       >
         {/* Subtle Internal Web Pattern Texture */}
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -32,25 +35,25 @@ export const AddTaskButton: React.FC<AddTaskButtonProps> = ({ onPress }) => {
               d="M0 27 Q 60 5 120 27 T 240 27"
               stroke="#FFFFFF"
               strokeWidth="0.8"
-              strokeOpacity="0.15"
+              strokeOpacity="0.18"
             />
             <Path
               d="M30 0 L80 54"
               stroke="#FFFFFF"
               strokeWidth="0.6"
-              strokeOpacity="0.12"
+              strokeOpacity="0.14"
             />
             <Path
               d="M260 0 L210 54"
               stroke="#FFFFFF"
               strokeWidth="0.6"
-              strokeOpacity="0.12"
+              strokeOpacity="0.14"
             />
           </Svg>
         </View>
 
         <Ionicons name="add" size={22} color="#FFFFFF" style={styles.plusIcon} />
-        <Text style={styles.buttonText}>Add Task</Text>
+        <Text style={styles.buttonText}>Deploy Objective</Text>
       </WebButtonInteraction>
     </View>
   );
@@ -59,23 +62,18 @@ export const AddTaskButton: React.FC<AddTaskButtonProps> = ({ onPress }) => {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.xl,
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
     marginBottom: Spacing.xl,
   },
   button: {
     height: 52,
     borderRadius: Radii.pill,
-    backgroundColor: '#DC2626',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(255, 255, 255, 0.25)',
-    shadowColor: SpideyColors.spideyRed,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    elevation: 6,
+    elevation: 4,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -84,8 +82,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15.5,
     fontWeight: '800',
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
   },
 });

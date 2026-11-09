@@ -1,4 +1,5 @@
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { Task } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
@@ -26,6 +27,7 @@ export const TodayTasksSection: React.FC<TodayTasksSectionProps> = ({
   onDeleteTask,
   onAddTask,
 }) => {
+  const colors = useTheme();
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   const filteredTasks = tasks.filter((t) => {
@@ -41,29 +43,38 @@ export const TodayTasksSection: React.FC<TodayTasksSectionProps> = ({
       {/* Header and Filter Row */}
       <View style={styles.headerRow}>
         <View style={styles.titleWithBadge}>
-          <Text style={styles.sectionHeading}>TODAY&apos;S TASKS</Text>
+          <Text style={[styles.sectionHeading, { color: colors.textSecondary }]}>TODAY&apos;S TASKS</Text>
           {pendingCount > 0 && (
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{pendingCount}</Text>
+            <View style={[styles.countBadge, { backgroundColor: colors.primarySubtle }]}>
+              <Text style={[styles.countText, { color: colors.primary }]}>{pendingCount}</Text>
             </View>
           )}
         </View>
 
         {/* Filter Pills with Web Pull */}
-        <View style={styles.filterTabs}>
+        <View style={[styles.filterTabs, { backgroundColor: colors.surface, borderColor: colors.borderSubtle }]}>
           {(['all', 'pending', 'completed'] as const).map((tab) => {
             const isSelected = filter === tab;
             return (
               <WebButtonInteraction
                 key={tab}
-                style={[styles.filterBtn, isSelected && styles.filterBtnActive]}
+                style={[
+                  styles.filterBtn,
+                  isSelected && { backgroundColor: colors.surfaceHover },
+                ]}
                 onPress={() => setFilter(tab)}
                 variant="compact"
                 sound="buttonTap"
                 haptic="light"
               >
                 <Text
-                  style={[styles.filterBtnText, isSelected && styles.filterBtnTextActive]}
+                  style={[
+                    styles.filterBtnText,
+                    {
+                      color: isSelected ? colors.primary : colors.textMuted,
+                      fontWeight: isSelected ? '700' : '500',
+                    },
+                  ]}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </Text>
@@ -75,22 +86,22 @@ export const TodayTasksSection: React.FC<TodayTasksSectionProps> = ({
 
       {/* Task Rows List */}
       {filteredTasks.length === 0 ? (
-        <View style={styles.emptyContainer}>
+        <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.borderSubtle }]}>
           <Ionicons
             name={filter === 'completed' ? 'checkmark-done-circle-outline' : 'checkbox-outline'}
             size={32}
-            color={SpideyColors.textMuted}
+            color={colors.textMuted}
           />
-          <Text style={styles.emptyTitle}>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>
             {filter === 'completed'
               ? 'No completed tasks yet'
               : filter === 'pending'
                 ? 'All tasks accomplished!'
                 : 'No independent tasks for today'}
           </Text>
-          <Text style={styles.emptySub}>
+          <Text style={[styles.emptySub, { color: colors.textMuted }]}>
             {filter === 'all'
-              ? 'Tap "+ New Task" below to schedule an objective.'
+              ? 'Tap "Deploy Objective" below to schedule an objective.'
               : 'Keep up the momentum.'}
           </Text>
         </View>
@@ -126,68 +137,49 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionHeading: {
-    color: SpideyColors.textMuted,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
   },
   countBadge: {
-    backgroundColor: SpideyColors.spideyRedSubtle,
     paddingVertical: 1,
     paddingHorizontal: 6,
     borderRadius: Radii.pill,
   },
   countText: {
-    color: SpideyColors.spideyRed,
     fontSize: 10,
     fontWeight: '800',
   },
   filterTabs: {
     flexDirection: 'row',
-    backgroundColor: SpideyColors.surface,
     borderRadius: Radii.xs,
     padding: 2,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
   },
   filterBtn: {
     paddingVertical: 3,
     paddingHorizontal: 8,
     borderRadius: Radii.xs - 1,
   },
-  filterBtnActive: {
-    backgroundColor: SpideyColors.surfaceElevated,
-  },
   filterBtnText: {
-    color: SpideyColors.textMuted,
     fontSize: 11,
-    fontWeight: '500',
-  },
-  filterBtnTextActive: {
-    color: SpideyColors.textPrimary,
-    fontWeight: '700',
   },
   emptyContainer: {
-    backgroundColor: SpideyColors.surface,
     borderRadius: Radii.lg,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
     marginTop: Spacing.sm,
   },
   emptySub: {
-    color: SpideyColors.textMuted,
     fontSize: 12,
     marginTop: 2,
     textAlign: 'center',
   },
 });
-

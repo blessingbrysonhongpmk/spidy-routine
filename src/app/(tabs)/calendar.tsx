@@ -2,9 +2,10 @@ import { useLightning } from '@/components/LightningEffect';
 import { TaskItem } from '@/components/TaskItem';
 import { WebBackground } from '@/components/WebBackground';
 import { WebButtonInteraction } from '@/components/WebButtonInteraction';
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
 import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
+import { useTheme } from '@/hooks/use-theme';
 import {
   formatDateHeader,
   getMonthMatrix,
@@ -13,8 +14,9 @@ import {
 } from '@/services/dateUtils';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
+  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -25,6 +27,7 @@ import {
 
 export default function CalendarScreen() {
   const router = useRouter();
+  const colors = useTheme();
   const {
     allTasks,
     selectedDate,
@@ -101,18 +104,18 @@ export default function CalendarScreen() {
   const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <WebBackground />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
         <View>
-          <Text style={styles.headerSubtitle}>MISSION SCHEDULE</Text>
-          <Text style={styles.headerTitle}>Tactical Calendar</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.primary }]}>MISSION SCHEDULE</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Tactical Calendar</Text>
         </View>
 
         <TouchableOpacity
-          style={styles.todayButton}
+          style={[styles.todayButton, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}
           onPress={() => {
             playSound('buttonTap');
             setSelectedDate(todayStr);
@@ -121,7 +124,7 @@ export default function CalendarScreen() {
           }}
           activeOpacity={0.75}
         >
-          <Text style={styles.todayButtonText}>Today</Text>
+          <Text style={[styles.todayButtonText, { color: colors.secondary }]}>Today</Text>
         </TouchableOpacity>
       </View>
 
@@ -131,25 +134,31 @@ export default function CalendarScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Month Navigation Card */}
-        <View style={styles.calendarCard}>
+        <View style={[styles.calendarCard, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
           <View style={styles.monthNav}>
-            <TouchableOpacity onPress={handlePrevMonth} style={styles.navArrowBtn}>
-              <Ionicons name="chevron-back" size={18} color={SpideyColors.textPrimary} />
+            <TouchableOpacity
+              onPress={handlePrevMonth}
+              style={[styles.navArrowBtn, { backgroundColor: colors.inputBackground, borderColor: colors.borderSubtle }]}
+            >
+              <Ionicons name="chevron-back" size={18} color={colors.text} />
             </TouchableOpacity>
 
-            <Text style={styles.monthTitle}>
+            <Text style={[styles.monthTitle, { color: colors.text }]}>
               {getMonthName(currentMonth)} {currentYear}
             </Text>
 
-            <TouchableOpacity onPress={handleNextMonth} style={styles.navArrowBtn}>
-              <Ionicons name="chevron-forward" size={18} color={SpideyColors.textPrimary} />
+            <TouchableOpacity
+              onPress={handleNextMonth}
+              style={[styles.navArrowBtn, { backgroundColor: colors.inputBackground, borderColor: colors.borderSubtle }]}
+            >
+              <Ionicons name="chevron-forward" size={18} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           {/* Day of Week Headers */}
-          <View style={styles.dayHeadersRow}>
+          <View style={[styles.dayHeadersRow, { borderBottomColor: colors.borderSubtle }]}>
             {dayHeaders.map((dh, idx) => (
-              <Text key={idx} style={styles.dayHeaderCell}>
+              <Text key={idx} style={[styles.dayHeaderCell, { color: colors.textMuted }]}>
                 {dh}
               </Text>
             ))}
@@ -176,8 +185,17 @@ export default function CalendarScreen() {
                       key={dIdx}
                       style={[
                         styles.dayCell,
-                        isToday && styles.todayCell,
-                        isSelected && styles.selectedDayCell,
+                        isToday && [
+                          styles.todayCell,
+                          {
+                            borderColor: colors.secondary,
+                            backgroundColor: colors.secondarySubtle,
+                          },
+                        ],
+                        isSelected && [
+                          styles.selectedDayCell,
+                          { backgroundColor: colors.primary },
+                        ],
                       ]}
                       onPress={() => handleSelectDate(dayStr)}
                       activeOpacity={0.7}
@@ -185,8 +203,9 @@ export default function CalendarScreen() {
                       <Text
                         style={[
                           styles.dayNumberText,
-                          isToday && styles.todayNumberText,
-                          isSelected && styles.selectedNumberText,
+                          { color: colors.text },
+                          isToday && { color: colors.secondary, fontWeight: '700' },
+                          isSelected && { color: '#FFFFFF', fontWeight: '800' },
                         ]}
                       >
                         {dayNum}
@@ -197,7 +216,9 @@ export default function CalendarScreen() {
                         <View
                           style={[
                             styles.taskDot,
-                            isAllDone ? styles.taskDotCompleted : styles.taskDotPending,
+                            {
+                              backgroundColor: isAllDone ? colors.success : colors.primary,
+                            },
                           ]}
                         />
                       ) : (
@@ -214,32 +235,32 @@ export default function CalendarScreen() {
         {/* Selected Date Agenda Section */}
         <View style={styles.agendaHeaderRow}>
           <View>
-            <Text style={styles.agendaDateTitle}>
+            <Text style={[styles.agendaDateTitle, { color: colors.text }]}>
               {formatDateHeader(selectedDate)}
             </Text>
-            <Text style={styles.agendaSubtitle}>
+            <Text style={[styles.agendaSubtitle, { color: colors.textMuted }]}>
               {selectedDateTasks.length} {selectedDateTasks.length === 1 ? 'task' : 'tasks'} scheduled
             </Text>
           </View>
 
           <WebButtonInteraction
-            style={styles.addDirectBtn}
+            style={[styles.addDirectBtn, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
             onPress={handleAddTaskForDate}
             variant="compact"
             sound="buttonTap"
             haptic="medium"
           >
-            <Ionicons name="add" size={16} color={SpideyColors.textPrimary} />
-            <Text style={styles.addDirectText}>New Task</Text>
+            <Ionicons name="add" size={16} color={colors.primary} />
+            <Text style={[styles.addDirectText, { color: colors.primary }]}>New Task</Text>
           </WebButtonInteraction>
         </View>
 
         {/* Tasks for the Selected Date */}
         {selectedDateTasks.length === 0 ? (
-          <View style={styles.emptyAgenda}>
-            <Ionicons name="calendar-outline" size={32} color={SpideyColors.textMuted} />
-            <Text style={styles.emptyAgendaTitle}>No missions scheduled for this date</Text>
-            <Text style={styles.emptyAgendaSub}>
+          <View style={[styles.emptyAgenda, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
+            <Ionicons name="calendar-outline" size={32} color={colors.textMuted} />
+            <Text style={[styles.emptyAgendaTitle, { color: colors.text }]}>No missions scheduled for this date</Text>
+            <Text style={[styles.emptyAgendaSub, { color: colors.textMuted }]}>
               Tap &quot;New Task&quot; above to deploy an objective on {formatDateHeader(selectedDate).split('•')[0]}.
             </Text>
           </View>
@@ -262,38 +283,34 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: SpideyColors.background,
   },
   header: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
+    paddingTop: Platform.OS === 'android' ? 14 : Spacing.md,
     paddingBottom: Spacing.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerSubtitle: {
-    color: SpideyColors.textMuted,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 2,
   },
   headerTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.4,
   },
   todayButton: {
-    backgroundColor: SpideyColors.surfaceElevated,
     borderWidth: 1,
-    borderColor: SpideyColors.borderMuted,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: Radii.sm,
   },
   todayButtonText: {
-    color: SpideyColors.thorBlue,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -305,13 +322,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   calendarCard: {
-    backgroundColor: SpideyColors.surface,
     borderRadius: Radii.lg,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
     padding: Spacing.md,
-    marginTop: Spacing.xs,
+    marginTop: Spacing.sm,
     marginBottom: Spacing.lg,
+    elevation: 2,
   },
   monthNav: {
     flexDirection: 'row',
@@ -323,14 +339,11 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: Radii.sm,
-    backgroundColor: SpideyColors.inputBackground,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
   },
   monthTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.2,
@@ -340,13 +353,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: SpideyColors.borderSubtle,
     marginBottom: Spacing.xs,
   },
   dayHeaderCell: {
     width: 36,
     textAlign: 'center',
-    color: SpideyColors.textMuted,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -372,36 +383,17 @@ const styles = StyleSheet.create({
   },
   todayCell: {
     borderWidth: 1,
-    borderColor: SpideyColors.thorBlue,
-    backgroundColor: SpideyColors.thorBlueSubtle,
   },
-  selectedDayCell: {
-    backgroundColor: SpideyColors.spideyRed,
-  },
+  selectedDayCell: {},
   dayNumberText: {
-    color: SpideyColors.textPrimary,
     fontSize: 13,
     fontWeight: '500',
-  },
-  todayNumberText: {
-    color: SpideyColors.thorBlue,
-    fontWeight: '700',
-  },
-  selectedNumberText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
   },
   taskDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
     marginTop: 3,
-  },
-  taskDotPending: {
-    backgroundColor: SpideyColors.spideyRed,
-  },
-  taskDotCompleted: {
-    backgroundColor: SpideyColors.success,
   },
   dotSpacer: {
     height: 4,
@@ -414,52 +406,44 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   agendaDateTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
   agendaSubtitle: {
-    color: SpideyColors.textMuted,
     fontSize: 12,
     marginTop: 2,
   },
   addDirectBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: SpideyColors.surfaceElevated,
     borderWidth: 1,
-    borderColor: SpideyColors.borderMuted,
     paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: Radii.sm,
+    paddingHorizontal: 11,
+    borderRadius: Radii.pill,
     gap: 4,
   },
   addDirectText: {
-    color: SpideyColors.textPrimary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   emptyAgenda: {
-    backgroundColor: SpideyColors.surface,
     borderRadius: Radii.lg,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.xxxl,
     paddingHorizontal: Spacing.xl,
   },
   emptyAgendaTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
     marginTop: Spacing.sm,
   },
   emptyAgendaSub: {
-    color: SpideyColors.textMuted,
     fontSize: 12,
     marginTop: 4,
     textAlign: 'center',
+    lineHeight: 18,
   },
 });

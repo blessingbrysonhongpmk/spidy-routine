@@ -1,5 +1,6 @@
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
 import { useSound } from '@/context/SoundContext';
+import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -14,14 +15,15 @@ interface TodayMissionCardProps {
 
 /**
  * TodayMissionCard:
- * Signature "Today's Mission" card inspired by reference mockup media_1793517437380_64339483.jpg.
- * Features red bullseye target, dynamic task goal with red brush underline, and live count tally.
+ * Signature "Today's Mission" card inspired by superhero tactical telemetry.
+ * Features crimson bullseye target, dynamic task goal with brush underline, and live count tally.
  */
 export const TodayMissionCard: React.FC<TodayMissionCardProps> = ({
   completedTasks,
   totalTasks,
   onPress,
 }) => {
+  const colors = useTheme();
   const { playSound, triggerHaptic } = useSound();
 
   const handlePress = () => {
@@ -35,7 +37,13 @@ export const TodayMissionCard: React.FC<TodayMissionCardProps> = ({
 
   return (
     <WebButtonInteraction
-      style={styles.card}
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.primaryBorder,
+        },
+      ]}
       onPress={handlePress}
       variant="subtle"
       sound="webShoot"
@@ -46,24 +54,24 @@ export const TodayMissionCard: React.FC<TodayMissionCardProps> = ({
       <View style={styles.targetWrapper}>
         <Svg width={36} height={36} viewBox="0 0 36 36" fill="none">
           {/* Outer Ring */}
-          <Circle cx={18} cy={18} r={16} stroke={SpideyColors.spideyRed} strokeWidth={2} strokeOpacity={0.8} />
+          <Circle cx={18} cy={18} r={16} stroke={colors.primary} strokeWidth={2} strokeOpacity={0.8} />
           {/* Middle Ring */}
-          <Circle cx={18} cy={18} r={10} stroke={SpideyColors.spideyRed} strokeWidth={2} strokeOpacity={0.9} />
+          <Circle cx={18} cy={18} r={10} stroke={colors.primary} strokeWidth={2} strokeOpacity={0.9} />
           {/* Bullseye Core */}
-          <Circle cx={18} cy={18} r={4.5} fill={SpideyColors.spideyRed} />
+          <Circle cx={18} cy={18} r={4.5} fill={colors.primary} />
         </Svg>
       </View>
 
       {/* Center Mission Details */}
       <View style={styles.detailsCol}>
-        <Text style={styles.missionLabel}>Today&apos;s Mission</Text>
-        <Text style={styles.missionTitle}>Complete {targetCount} tasks</Text>
-        
+        <Text style={[styles.missionLabel, { color: colors.textMuted }]}>Today&apos;s Mission</Text>
+        <Text style={[styles.missionTitle, { color: colors.text }]}>Complete {targetCount} tasks</Text>
+
         {/* Dynamic Stylized Red Brush Underline */}
         <Svg width={120} height={6} viewBox="0 0 120 6" fill="none" style={styles.brushUnderline}>
           <Path
             d="M2 3 Q 30 1 60 4 T 118 2"
-            stroke={SpideyColors.spideyRed}
+            stroke={colors.primary}
             strokeWidth={2.2}
             strokeLinecap="round"
           />
@@ -74,10 +82,10 @@ export const TodayMissionCard: React.FC<TodayMissionCardProps> = ({
       <View style={styles.ratioCol}>
         <View style={styles.ratioRow}>
           <Text style={styles.ratioText}>
-            <Text style={styles.ratioCompleted}>{completedCount}</Text>
-            <Text style={styles.ratioTotal}> / {targetCount}</Text>
+            <Text style={[styles.ratioCompleted, { color: colors.text }]}>{completedCount}</Text>
+            <Text style={[styles.ratioTotal, { color: colors.textMuted }]}> / {targetCount}</Text>
           </Text>
-          <Ionicons name="chevron-forward" size={16} color={SpideyColors.textMuted} />
+          <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         </View>
       </View>
     </WebButtonInteraction>
@@ -88,19 +96,13 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: Spacing.xl,
     marginBottom: Spacing.md,
-    backgroundColor: '#0C0E14',
     borderRadius: Radii.lg,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.25)',
     paddingVertical: 14,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: SpideyColors.spideyRed,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
   targetWrapper: {
     width: 40,
@@ -114,14 +116,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   missionLabel: {
-    color: SpideyColors.textMuted,
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.2,
     marginBottom: 2,
   },
   missionTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: -0.2,
@@ -142,10 +142,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
-  ratioCompleted: {
-    color: SpideyColors.textPrimary,
-  },
-  ratioTotal: {
-    color: SpideyColors.textMuted,
-  },
+  ratioCompleted: {},
+  ratioTotal: {},
 });

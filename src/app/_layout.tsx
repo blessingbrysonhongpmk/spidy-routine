@@ -4,11 +4,12 @@ import { SpideyColors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DatabaseProvider, useDatabase } from '@/context/DatabaseContext';
 import { SoundProvider } from '@/context/SoundContext';
+import { ThemeProvider, useThemeContext } from '@/context/ThemeContext';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // Prevent the native splash screen from auto-hiding before our intro mounts
 SplashScreen.preventAutoHideAsync().catch(() => { });
@@ -32,6 +33,7 @@ let sessionIntroShown = false;
 function AppNavigation() {
   const { initialized } = useDatabase();
   const { loading } = useAuth();
+  const { isDark, colors } = useThemeContext();
   const [showIntro, setShowIntro] = useState(!sessionIntroShown);
 
   const isAppReady = initialized && !loading;
@@ -54,12 +56,12 @@ function AppNavigation() {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: SpideyColors.background },
+          contentStyle: { backgroundColor: colors.background },
           animation: 'fade',
         }}
       >
@@ -107,15 +109,17 @@ function AppNavigation() {
 
 export default function RootLayout() {
   return (
-    <SoundProvider>
-      <AuthProvider>
-        <DatabaseProvider>
-          <LightningProvider>
-            <AppNavigation />
-          </LightningProvider>
-        </DatabaseProvider>
-      </AuthProvider>
-    </SoundProvider>
+    <ThemeProvider>
+      <SoundProvider>
+        <AuthProvider>
+          <DatabaseProvider>
+            <LightningProvider>
+              <AppNavigation />
+            </LightningProvider>
+          </DatabaseProvider>
+        </AuthProvider>
+      </SoundProvider>
+    </ThemeProvider>
   );
 }
 

@@ -1,8 +1,9 @@
 import { useLightning } from '@/components/LightningEffect';
 import { WebButtonInteraction } from '@/components/WebButtonInteraction';
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
 import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
+import { useTheme } from '@/hooks/use-theme';
 import { DayOfWeek, RoutineCategory } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -21,6 +22,7 @@ import {
 
 export default function ModalRoutineScreen() {
   const router = useRouter();
+  const colors = useTheme();
   const { addRoutine } = useDatabase();
   const { playSound, triggerHaptic } = useSound();
   const { triggerLightning } = useLightning();
@@ -93,36 +95,48 @@ export default function ModalRoutineScreen() {
     }
   };
 
-  const categories: { key: RoutineCategory; label: string; color: string }[] = [
-    { key: 'morning', label: 'Morning', color: SpideyColors.spideyRed },
-    { key: 'afternoon', label: 'Afternoon', color: SpideyColors.thorBlue },
-    { key: 'evening', label: 'Evening', color: SpideyColors.venomPurple },
-    { key: 'night', label: 'Night', color: '#A78BFA' },
+  const categories: { key: RoutineCategory; label: string; color: string; bg: string }[] = [
+    { key: 'morning', label: 'Morning', color: colors.primary, bg: colors.primarySubtle },
+    { key: 'afternoon', label: 'Afternoon', color: colors.secondary, bg: colors.secondarySubtle },
+    { key: 'evening', label: 'Evening', color: colors.purple, bg: colors.purpleSubtle },
+    { key: 'night', label: 'Night', color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.12)' },
   ];
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.keyboardContainer}
+      style={[styles.keyboardContainer, { backgroundColor: colors.background }]}
     >
-      <View style={styles.modalSheet}>
+      <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
         {/* Header Bar */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.cancelBtn}>
-            <Ionicons name="close" size={22} color={SpideyColors.textSecondary} />
+        <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.cancelBtn}
+            accessibilityLabel="Close"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="close" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>NEW ROUTINE PROTOCOL</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>NEW ROUTINE PROTOCOL</Text>
           <View style={{ width: 22 }} />
         </View>
 
         <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
           {/* Routine Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>PROTOCOL NAME *</Text>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>PROTOCOL NAME *</Text>
             <TextInput
-              style={styles.textInput}
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.inputBackground,
+                  borderColor: colors.borderSubtle,
+                  color: colors.text,
+                },
+              ]}
               placeholder="e.g. Suit Up, Core Training, Mind Reset"
-              placeholderTextColor={SpideyColors.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={name}
               onChangeText={setName}
             />
@@ -130,7 +144,7 @@ export default function ModalRoutineScreen() {
 
           {/* Category Selector */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>TIME OF DAY</Text>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>TIME OF DAY</Text>
             <View style={styles.categoryRow}>
               {categories.map((c) => {
                 const isSelected = category === c.key;
@@ -139,7 +153,10 @@ export default function ModalRoutineScreen() {
                     key={c.key}
                     style={[
                       styles.categoryBtn,
-                      isSelected && { borderColor: c.color, backgroundColor: SpideyColors.surfaceElevated },
+                      {
+                        backgroundColor: isSelected ? c.bg : colors.inputBackground,
+                        borderColor: isSelected ? c.color : colors.borderSubtle,
+                      },
                     ]}
                     onPress={() => {
                       playSound('buttonTap');
@@ -150,7 +167,10 @@ export default function ModalRoutineScreen() {
                     <Text
                       style={[
                         styles.categoryBtnText,
-                        isSelected && { color: c.color, fontWeight: '700' },
+                        {
+                          color: isSelected ? c.color : colors.textMuted,
+                          fontWeight: isSelected ? '700' : '600',
+                        },
                       ]}
                     >
                       {c.label}
@@ -163,17 +183,31 @@ export default function ModalRoutineScreen() {
 
           {/* Repeat Days */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>REPEAT DAYS</Text>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>REPEAT DAYS</Text>
             <View style={styles.daysRow}>
               {days.map((day) => {
                 const active = repeatDays.includes(day);
                 return (
                   <TouchableOpacity
                     key={day}
-                    style={[styles.dayCircle, active && styles.dayCircleActive]}
+                    style={[
+                      styles.dayCircle,
+                      {
+                        backgroundColor: active ? colors.primary : colors.inputBackground,
+                        borderColor: active ? colors.primary : colors.borderSubtle,
+                      },
+                    ]}
                     onPress={() => toggleDay(day)}
                   >
-                    <Text style={[styles.dayText, active && styles.dayTextActive]}>
+                    <Text
+                      style={[
+                        styles.dayText,
+                        {
+                          color: active ? '#FFFFFF' : colors.textMuted,
+                          fontWeight: active ? '700' : '600',
+                        },
+                      ]}
+                    >
                       {day}
                     </Text>
                   </TouchableOpacity>
@@ -185,26 +219,43 @@ export default function ModalRoutineScreen() {
           {/* Activities List */}
           <View style={styles.inputGroup}>
             <View style={styles.activitiesHeader}>
-              <Text style={styles.inputLabel}>ACTIVITIES</Text>
+              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>ACTIVITIES</Text>
               <TouchableOpacity onPress={handleAddItem} style={styles.addActivityBtn}>
-                <Ionicons name="add" size={16} color={SpideyColors.spideyRed} />
-                <Text style={styles.addActivityText}>Add Step</Text>
+                <Ionicons name="add" size={16} color={colors.primary} />
+                <Text style={[styles.addActivityText, { color: colors.primary }]}>Add Step</Text>
               </TouchableOpacity>
             </View>
 
             {items.map((item, idx) => (
               <View key={idx} style={styles.activityItemRow}>
                 <TextInput
-                  style={[styles.textInput, { flex: 1, marginRight: 8 }]}
+                  style={[
+                    styles.textInput,
+                    {
+                      flex: 1,
+                      marginRight: 8,
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.borderSubtle,
+                      color: colors.text,
+                    },
+                  ]}
                   placeholder={`Activity #${idx + 1}`}
-                  placeholderTextColor={SpideyColors.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   value={item.title}
                   onChangeText={(val) => handleItemChange(idx, 'title', val)}
                 />
                 <TextInput
-                  style={[styles.textInput, { width: 95 }]}
+                  style={[
+                    styles.textInput,
+                    {
+                      width: 95,
+                      backgroundColor: colors.inputBackground,
+                      borderColor: colors.borderSubtle,
+                      color: colors.text,
+                    },
+                  ]}
                   placeholder="06:00 AM"
-                  placeholderTextColor={SpideyColors.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   value={item.scheduled_time}
                   onChangeText={(val) => handleItemChange(idx, 'scheduled_time', val)}
                 />
@@ -213,7 +264,7 @@ export default function ModalRoutineScreen() {
                     onPress={() => handleRemoveItem(idx)}
                     style={styles.trashBtn}
                   >
-                    <Ionicons name="trash-outline" size={17} color={SpideyColors.textMuted} />
+                    <Ionicons name="trash-outline" size={17} color={colors.textMuted} />
                   </TouchableOpacity>
                 ) : null}
               </View>
@@ -222,7 +273,7 @@ export default function ModalRoutineScreen() {
 
           {/* Submit Action Button with Web Pull */}
           <WebButtonInteraction
-            style={styles.saveBtn}
+            style={[styles.saveBtn, { backgroundColor: colors.primary }]}
             onPress={handleSave}
             variant="primary"
             sound="buttonTap"
@@ -239,11 +290,9 @@ export default function ModalRoutineScreen() {
 const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
-    backgroundColor: SpideyColors.background,
   },
   modalSheet: {
     flex: 1,
-    backgroundColor: SpideyColors.surface,
     paddingTop: Spacing.md,
     paddingHorizontal: Spacing.xl,
   },
@@ -253,15 +302,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: SpideyColors.borderSubtle,
   },
   cancelBtn: {
     padding: Spacing.xs,
   },
   headerTitle: {
-    color: SpideyColors.textPrimary,
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 1,
   },
   formScroll: {
@@ -272,18 +319,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   inputLabel: {
-    color: SpideyColors.textMuted,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
     marginBottom: Spacing.xs,
   },
   textInput: {
-    backgroundColor: SpideyColors.inputBackground,
     borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
-    color: SpideyColors.textPrimary,
     paddingHorizontal: Spacing.md,
     paddingVertical: 11,
     fontSize: 14,
@@ -297,14 +340,10 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: Radii.sm,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
     alignItems: 'center',
-    backgroundColor: SpideyColors.inputBackground,
   },
   categoryBtnText: {
-    color: SpideyColors.textMuted,
     fontSize: 12,
-    fontWeight: '600',
   },
   daysRow: {
     flexDirection: 'row',
@@ -314,24 +353,12 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: Radii.sm,
-    backgroundColor: SpideyColors.inputBackground,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dayCircleActive: {
-    backgroundColor: SpideyColors.spideyRed,
-    borderColor: SpideyColors.spideyRed,
-  },
   dayText: {
-    color: SpideyColors.textMuted,
     fontSize: 11,
-    fontWeight: '600',
-  },
-  dayTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
   },
   activitiesHeader: {
     flexDirection: 'row',
@@ -345,7 +372,6 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   addActivityText: {
-    color: SpideyColors.spideyRed,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -364,7 +390,6 @@ const styles = StyleSheet.create({
   saveBtn: {
     height: 48,
     borderRadius: Radii.sm,
-    backgroundColor: SpideyColors.thorBlue,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: Spacing.sm,
@@ -373,7 +398,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 1,
   },
 });

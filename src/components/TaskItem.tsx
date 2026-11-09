@@ -1,5 +1,6 @@
-import { Radii, Spacing, SpideyColors } from '@/constants/theme';
+import { Radii, Spacing } from '@/constants/theme';
 import { useSound } from '@/context/SoundContext';
+import { useTheme } from '@/hooks/use-theme';
 import { Task } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
@@ -16,7 +17,7 @@ interface TaskItemProps {
 /**
  * TaskItem:
  * Refined, clean task row with comfortable 44pt+ touch targets.
- * Spider-Man web-shoot interaction on checkmark toggle.
+ * Spider-Man web-shoot interaction on checkmark toggle with Thor electric response.
  */
 export const TaskItem: React.FC<TaskItemProps> = ({
   task,
@@ -24,12 +25,18 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const colors = useTheme();
   const { playSound, triggerHaptic } = useSound();
   const [showBurst, setShowBurst] = useState(false);
 
   const handleToggle = () => {
     if (!task.completed) {
       setShowBurst(true);
+      playSound('taskSuccess');
+      triggerHaptic('success');
+    } else {
+      playSound('buttonTap');
+      triggerHaptic('light');
     }
     onToggle(task.id, task.completed);
   };
@@ -49,14 +56,27 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => onDelete(task.id),
+          onPress: () => {
+            playSound('deleteAction');
+            triggerHaptic('medium');
+            onDelete(task.id);
+          },
         },
       ]
     );
   };
 
   return (
-    <View style={[styles.container, task.completed && styles.containerCompleted]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: task.completed ? colors.inputBackground : colors.surface,
+          borderColor: task.completed ? colors.borderSubtle : colors.borderMuted,
+        },
+        task.completed && styles.containerCompleted,
+      ]}
+    >
       {/* 44pt Checkbox Touch Target with Web Burst */}
       <TouchableOpacity
         style={styles.checkboxTouchTarget}
@@ -70,11 +90,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         <View
           style={[
             styles.checkbox,
-            task.completed && styles.checkboxCompleted,
+            { borderColor: colors.borderMuted },
+            task.completed && {
+              backgroundColor: colors.success,
+              borderColor: colors.success,
+            },
           ]}
         >
           {task.completed && (
-            <Ionicons name="checkmark" size={13} color={SpideyColors.background} />
+            <Ionicons name="checkmark" size={13} color="#FFFFFF" />
           )}
         </View>
       </TouchableOpacity>
@@ -86,7 +110,11 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         activeOpacity={0.75}
       >
         <Text
-          style={[styles.title, task.completed && styles.titleCompleted]}
+          style={[
+            styles.title,
+            { color: colors.text },
+            task.completed && [styles.titleCompleted, { color: colors.textMuted }],
+          ]}
           numberOfLines={2}
         >
           {task.title}
@@ -94,25 +122,25 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
         <View style={styles.metaRow}>
           {task.time ? (
-            <View style={styles.timeBadge}>
+            <View style={[styles.timeBadge, { backgroundColor: colors.inputBackground }]}>
               <Ionicons
                 name="time-outline"
                 size={12}
-                color={SpideyColors.textMuted}
+                color={colors.textSecondary}
                 style={styles.timeIcon}
               />
-              <Text style={styles.timeText}>{task.time}</Text>
+              <Text style={[styles.timeText, { color: colors.textSecondary }]}>{task.time}</Text>
             </View>
           ) : null}
 
           {task.reminder_enabled ? (
             <View style={styles.reminderBadge}>
-              <Ionicons name="notifications-outline" size={11} color={SpideyColors.spideyRed} />
+              <Ionicons name="notifications-outline" size={12} color={colors.primary} />
             </View>
           ) : null}
 
           {task.description ? (
-            <Text style={styles.descriptionText} numberOfLines={1}>
+            <Text style={[styles.descriptionText, { color: colors.textMuted }]} numberOfLines={1}>
               {task.description}
             </Text>
           ) : null}
@@ -125,15 +153,17 @@ export const TaskItem: React.FC<TaskItemProps> = ({
           style={styles.actionBtn}
           onPress={handleEdit}
           accessibilityLabel="Edit task"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="pencil-outline" size={16} color={SpideyColors.textMuted} />
+          <Ionicons name="pencil-outline" size={16} color={colors.textMuted} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={handleDelete}
           accessibilityLabel="Delete task"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="trash-outline" size={16} color={SpideyColors.textMuted} />
+          <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
     </View>
@@ -142,24 +172,20 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: SpideyColors.surface,
     borderRadius: Radii.md,
     borderWidth: 1,
-    borderColor: SpideyColors.borderSubtle,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.sm + 2,
     paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs + 2,
     flexDirection: 'row',
     alignItems: 'center',
   },
   containerCompleted: {
-    backgroundColor: SpideyColors.inputBackground,
-    borderColor: SpideyColors.borderSubtle,
-    opacity: 0.75,
+    opacity: 0.72,
   },
   checkboxTouchTarget: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.sm,
@@ -169,27 +195,20 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: SpideyColors.borderMuted,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  checkboxCompleted: {
-    backgroundColor: SpideyColors.success,
-    borderColor: SpideyColors.success,
   },
   details: {
     flex: 1,
     paddingRight: Spacing.sm,
   },
   title: {
-    color: SpideyColors.textPrimary,
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '600',
     letterSpacing: -0.2,
-    lineHeight: 19,
+    lineHeight: 20,
   },
   titleCompleted: {
-    color: SpideyColors.textMuted,
     textDecorationLine: 'line-through',
   },
   metaRow: {
@@ -201,16 +220,14 @@ const styles = StyleSheet.create({
   timeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: SpideyColors.inputBackground,
-    paddingVertical: 1,
-    paddingHorizontal: 6,
+    paddingVertical: 2,
+    paddingHorizontal: 7,
     borderRadius: Radii.xs,
   },
   timeIcon: {
     marginRight: 3,
   },
   timeText: {
-    color: SpideyColors.textSecondary,
     fontSize: 11,
     fontWeight: '500',
   },
@@ -219,7 +236,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   descriptionText: {
-    color: SpideyColors.textMuted,
     fontSize: 12,
     flex: 1,
   },

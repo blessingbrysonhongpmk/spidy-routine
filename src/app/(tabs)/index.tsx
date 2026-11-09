@@ -5,22 +5,22 @@ import { TimelineSection } from '@/components/TimelineSection';
 import { TodayMissionCard } from '@/components/TodayMissionCard';
 import { TodayTasksSection } from '@/components/TodayTasksSection';
 import { WebBackground } from '@/components/WebBackground';
-import { SpideyColors } from '@/constants/theme';
 import { useDatabase } from '@/context/DatabaseContext';
+import { useTheme } from '@/hooks/use-theme';
 import { formatDateHeader, getTodayDateString } from '@/services/dateUtils';
 import { Task } from '@/types';
 import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   RefreshControl,
   SafeAreaView,
   ScrollView,
-  StatusBar,
-  StyleSheet,
+  StyleSheet
 } from 'react-native';
 
 export default function TodayDashboardScreen() {
   const router = useRouter();
+  const colors = useTheme();
   const {
     tasks,
     itemsByCategory,
@@ -33,7 +33,7 @@ export default function TodayDashboardScreen() {
     selectedDate,
   } = useDatabase();
 
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -96,8 +96,7 @@ export default function TodayDashboardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <WebBackground />
 
       <ScrollView
@@ -108,8 +107,8 @@ export default function TodayDashboardScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={SpideyColors.spideyRed}
-            colors={[SpideyColors.spideyRed]}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
       >
@@ -143,7 +142,7 @@ export default function TodayDashboardScreen() {
           onToggleItem={handleToggleRoutineItem}
         />
 
-        {/* 5. Primary Action: + Add Task Glowing Crimson Pill Button */}
+        {/* 5. Primary Action: + Deploy Objective Glowing Crimson Pill Button */}
         <AddTaskButton onPress={handleAddTaskPress} />
 
         {/* 6. Today's Independent Tasks: Filter chips (All/Pending/Done), Checkboxes with Web-Burst */}
@@ -162,7 +161,6 @@ export default function TodayDashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: SpideyColors.background,
   },
   scrollView: {
     flex: 1,
