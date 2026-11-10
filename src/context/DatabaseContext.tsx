@@ -14,6 +14,7 @@ import {
   seedHeroStarterProtocols,
   toggleRoutineItemCompletion,
   toggleTaskComplete,
+  updateRoutine,
   updateTask,
   UserStats,
 } from '@/services/database';
@@ -53,6 +54,13 @@ interface DatabaseContextType {
     repeatDays: string[],
     items: { title: string; scheduled_time?: string }[]
   ) => Promise<string>;
+  editRoutine: (
+    id: string,
+    name: string,
+    category: RoutineCategory,
+    repeatDays: string[],
+    items: { id?: string; title: string; scheduled_time?: string }[]
+  ) => Promise<void>;
   removeRoutine: (id: string) => Promise<void>;
   resetToSampleData: () => Promise<void>;
   clearAllData: () => Promise<void>;
@@ -228,6 +236,19 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
     return id;
   };
 
+  const handleEditRoutine = async (
+    id: string,
+    name: string,
+    category: RoutineCategory,
+    repeatDays: string[],
+    items: { id?: string; title: string; scheduled_time?: string }[]
+  ) => {
+    await updateRoutine(id, name, category, repeatDays, items);
+    playSound('buttonTap');
+    triggerHaptic('medium');
+    await loadData(selectedDate);
+  };
+
   const handleRemoveRoutine = async (id: string) => {
     await deleteRoutine(id);
     playSound('deleteAction');
@@ -275,6 +296,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
         toggleTask: handleToggleTask,
         toggleRoutineItem: handleToggleRoutineItem,
         addRoutine: handleAddRoutine,
+        editRoutine: handleEditRoutine,
         removeRoutine: handleRemoveRoutine,
         resetToSampleData: handleResetToSampleData,
         clearAllData: handleClearAllData,

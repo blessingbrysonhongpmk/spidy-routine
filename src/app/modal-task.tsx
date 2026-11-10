@@ -6,7 +6,7 @@ import { formatShortDate, getTodayDateString } from '@/services/dateUtils';
 import { TaskPriority } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,

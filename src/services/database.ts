@@ -360,6 +360,34 @@ export async function createRoutine(
   return routineId;
 }
 
+export async function updateRoutine(
+  routineId: string,
+  name: string,
+  category: RoutineCategory,
+  repeatDays: string[],
+  items: { id?: string; title: string; scheduled_time?: string }[]
+): Promise<void> {
+  const db = getDatabase();
+  await db.runAsync(
+    `UPDATE routines SET name = ?, category = ?, repeat_days = ? WHERE id = ?`,
+    [name, category, JSON.stringify(repeatDays), routineId]
+  );
+
+  await db.runAsync(
+    'DELETE FROM routine_completions WHERE routine_item_id IN (SELECT id FROM routine_items WHERE routine_id = ?)',
+    [routineId]
+  );
+  await db.runAsync('DELETE FROM routine_items WHERE routine_id = ?', [routineId]);
+
+  for (let i = 0; i < items.length; i++) {
+    await db.runAsync(
+      `INSERT INTO routine_items (id, routine_id, title, scheduled_time, sort_order, is_active)
+       VALUES (?, ?, ?, ?, ?, 1)`,
+      [items[i].id || Crypto.randomUUID(), routineId, items[i].title, items[i].scheduled_time || '', i]
+    );
+  }
+}
+
 export async function deleteRoutine(routineId: string): Promise<void> {
   const db = getDatabase();
   await db.runAsync('DELETE FROM routine_completions WHERE routine_item_id IN (SELECT id FROM routine_items WHERE routine_id = ?)', [routineId]);

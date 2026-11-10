@@ -211,7 +211,7 @@ export default function SettingsScreen() {
                 >
                   <Ionicons name="create-outline" size={12} color={colors.primary} />
                   <Text style={[styles.editBadgeText, { color: colors.primary }]}>
-                    {user?.name ? 'EDIT DOSSIER' : 'INITIALIZE'}
+                    {user?.name ? 'EDIT PROFILE' : 'SET UP'}
                   </Text>
                 </TouchableOpacity>
               </View>

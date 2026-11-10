@@ -110,8 +110,8 @@ export default function CalendarScreen() {
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
         <View>
-          <Text style={[styles.headerSubtitle, { color: colors.primary }]}>MISSION SCHEDULE</Text>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Tactical Calendar</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.primary }]}>SCHEDULE</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Calendar</Text>
         </View>
 
         <TouchableOpacity
@@ -259,9 +259,9 @@ export default function CalendarScreen() {
         {selectedDateTasks.length === 0 ? (
           <View style={[styles.emptyAgenda, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
             <Ionicons name="calendar-outline" size={32} color={colors.textMuted} />
-            <Text style={[styles.emptyAgendaTitle, { color: colors.text }]}>No missions scheduled for this date</Text>
+            <Text style={[styles.emptyAgendaTitle, { color: colors.text }]}>No tasks scheduled for this date</Text>
             <Text style={[styles.emptyAgendaSub, { color: colors.textMuted }]}>
-              Tap &quot;New Task&quot; above to deploy an objective on {formatDateHeader(selectedDate).split('•')[0]}.
+              Tap &quot;New Task&quot; above to schedule a task on {formatDateHeader(selectedDate).split('•')[0]}.
             </Text>
           </View>
         ) : (

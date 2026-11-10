@@ -137,13 +137,52 @@ export default function ProfileScreen() {
         >
           {/* Avatar and Portrait Selector */}
           <View style={[styles.avatarCard, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
-            <View style={[styles.avatarCircle, { borderColor: colors.primary }]}>
-              <Image
-                source={require('@/assets/images/hero-portrait.jpg')}
-                style={styles.avatarImg}
-                contentFit="cover"
-              />
-            </View>
+            <TouchableOpacity
+              style={[
+                styles.avatarCircle,
+                {
+                  borderColor:
+                    avatarType === 'thor'
+                      ? '#38BDF8'
+                      : avatarType === 'venom'
+                        ? '#A855F7'
+                        : colors.primary,
+                },
+              ]}
+              onPress={() => {
+                playSound('buttonTap');
+                triggerHaptic('light');
+                const nextType =
+                  avatarType === 'spiderman'
+                    ? 'thor'
+                    : avatarType === 'thor'
+                      ? 'venom'
+                      : 'spiderman';
+                setAvatarType(nextType);
+                setHeroArchetype(nextType);
+              }}
+              activeOpacity={0.8}
+              accessibilityLabel="Change avatar"
+            >
+              {avatarType === 'thor' ? (
+                <View style={[styles.avatarEmblemBox, { backgroundColor: '#0C1B2A' }]}>
+                  <Ionicons name="flash" size={32} color="#38BDF8" />
+                </View>
+              ) : avatarType === 'venom' ? (
+                <View style={[styles.avatarEmblemBox, { backgroundColor: '#1A0B2E' }]}>
+                  <Ionicons name="water" size={32} color="#A855F7" />
+                </View>
+              ) : (
+                <Image
+                  source={require('@/assets/images/hero-portrait.jpg')}
+                  style={styles.avatarImg}
+                  contentFit="cover"
+                />
+              )}
+              <View style={styles.avatarEditBadge}>
+                <Ionicons name="camera-reverse" size={11} color="#FFFFFF" />
+              </View>
+            </TouchableOpacity>
 
             <View style={styles.avatarDetails}>
               <Text style={[styles.avatarName, { color: colors.text }]}>
@@ -535,6 +574,23 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 2,
     marginRight: Spacing.md,
+    position: 'relative',
+  },
+  avatarEmblemBox: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#0B0F17',
+    borderRadius: 8,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   avatarImg: {
     width: '100%',

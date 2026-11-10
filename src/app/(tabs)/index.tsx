@@ -1,5 +1,6 @@
 import { AddTaskButton } from '@/components/AddTaskButton';
 import { HeaderBranding } from '@/components/HeaderBranding';
+import { ReminderBanner } from '@/components/ReminderBanner';
 import { TimelineSection } from '@/components/TimelineSection';
 import { TodayTasksSection } from '@/components/TodayTasksSection';
 import { WebBackground } from '@/components/WebBackground';
@@ -68,6 +69,11 @@ export default function TodayDashboardScreen() {
     };
   }, [itemsByCategory]);
 
+  // Find the first uncompleted task with reminder enabled
+  const reminderTask = useMemo(() => {
+    return tasks.find((t) => t.reminder_enabled && !t.completed);
+  }, [tasks]);
+
   const handleNextActivityComplete = () => {
     if (nextActivity.id !== 'default') {
       toggleRoutineItem(nextActivity.id, selectedDate, false);
@@ -124,7 +130,12 @@ export default function TodayDashboardScreen() {
         {/* 2. Primary Quick Add Action */}
         <AddTaskButton onPress={handleAddTaskPress} />
 
-        {/* 3. Today's Tasks: Pending, Completed, Filter chips with one-tap toggle */}
+        {/* 3. Important Reminders Banner (if any) */}
+        {reminderTask ? (
+          <ReminderBanner task={reminderTask} onPress={handleEditTask} />
+        ) : null}
+
+        {/* 4. Today's Tasks: Pending, Completed, Filter chips with one-tap toggle */}
         <TodayTasksSection
           tasks={tasks}
           onToggleTask={handleToggleTask}

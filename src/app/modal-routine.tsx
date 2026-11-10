@@ -6,7 +6,7 @@ import { useSound } from '@/context/SoundContext';
 import { useTheme } from '@/hooks/use-theme';
 import { DayOfWeek, RoutineCategory } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
@@ -23,24 +23,36 @@ import {
 export default function ModalRoutineScreen() {
   const router = useRouter();
   const colors = useTheme();
-  const { addRoutine } = useDatabase();
+  const params = useLocalSearchParams<{ id?: string }>();
+  const { routines, addRoutine, editRoutine } = useDatabase();
   const { playSound, triggerHaptic } = useSound();
   const { triggerLightning } = useLightning();
 
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<RoutineCategory>('morning');
-  const [repeatDays, setRepeatDays] = useState<DayOfWeek[]>([
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ]);
-  const [items, setItems] = useState<{ title: string; scheduled_time: string }[]>([
-    { title: '', scheduled_time: '06:00 AM' },
-  ]);
+  const isEditing = Boolean(params.id);
+  const existingRoutine = isEditing ? routines.find((r) => r.id === params.id) : null;
+
+  const [name, setName] = useState(existingRoutine?.name || '');
+  const [category, setCategory] = useState<RoutineCategory>(existingRoutine?.category || 'morning');
+  const [repeatDays, setRepeatDays] = useState<DayOfWeek[]>(
+    (existingRoutine?.repeat_days as DayOfWeek[]) || [
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
+    ]
+  );
+  const [items, setItems] = useState<{ id?: string; title: string; scheduled_time: string }[]>(
+    existingRoutine?.items && existingRoutine.items.length > 0
+      ? existingRoutine.items.map((i) => ({
+          id: i.id,
+          title: i.title,
+          scheduled_time: i.scheduled_time || '06:00 AM',
+        }))
+      : [{ title: '', scheduled_time: '06:00 AM' }]
+  );
 
   const days: DayOfWeek[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -74,7 +86,7 @@ export default function ModalRoutineScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Protocol Name Required', 'Please enter a name for this routine protocol.');
+      Alert.alert('Routine Name Required', 'Please enter a name for this routine.');
       return;
     }
 
@@ -85,13 +97,17 @@ export default function ModalRoutineScreen() {
     }
 
     try {
-      await addRoutine(name.trim(), category, repeatDays, validItems);
+      if (isEditing && existingRoutine) {
+        await editRoutine(existingRoutine.id, name.trim(), category, repeatDays, validItems);
+      } else {
+        await addRoutine(name.trim(), category, repeatDays, validItems);
+      }
       triggerLightning({ intensity: 'medium' });
       triggerHaptic('success');
       router.back();
     } catch (err) {
-      console.error('Failed to create routine:', err);
-      Alert.alert('Error', 'Could not create routine protocol.');
+      console.error('Failed to save routine:', err);
+      Alert.alert('Error', 'Could not save routine. Please try again.');
     }
   };
 
@@ -118,14 +134,16 @@ export default function ModalRoutineScreen() {
           >
             <Ionicons name="close" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>NEW ROUTINE PROTOCOL</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {isEditing ? 'EDIT ROUTINE' : 'NEW ROUTINE'}
+          </Text>
           <View style={{ width: 22 }} />
         </View>
 
         <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
           {/* Routine Name */}
           <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>PROTOCOL NAME *</Text>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>ROUTINE NAME *</Text>
             <TextInput
               style={[
                 styles.textInput,
@@ -135,7 +153,7 @@ export default function ModalRoutineScreen() {
                   color: colors.text,
                 },
               ]}
-              placeholder="e.g. Suit Up, Core Training, Mind Reset"
+              placeholder="e.g. Morning Patrol, Focus Session, Evening Reset"
               placeholderTextColor={colors.textMuted}
               value={name}
               onChangeText={setName}
@@ -279,7 +297,9 @@ export default function ModalRoutineScreen() {
             sound="buttonTap"
             haptic="medium"
           >
-            <Text style={styles.saveBtnText}>INITIALIZE PROTOCOL</Text>
+            <Text style={styles.saveBtnText}>
+              {isEditing ? 'SAVE ROUTINE' : 'CREATE ROUTINE'}
+            </Text>
           </WebButtonInteraction>
         </ScrollView>
       </View>

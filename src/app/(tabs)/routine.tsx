@@ -262,14 +262,24 @@ export default function RoutineScreen() {
                     Days: {r.repeat_days.join(', ')}
                   </Text>
                 </View>
-                <TouchableOpacity
-                  onPress={() => handleDeleteRoutine(r.id, r.name)}
-                  style={styles.deleteProtocolBtn}
-                  accessibilityLabel="Delete protocol"
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
-                </TouchableOpacity>
+                <View style={styles.protocolActions}>
+                  <TouchableOpacity
+                    onPress={() => router.push({ pathname: '/modal-routine', params: { id: r.id } })}
+                    style={styles.actionProtocolBtn}
+                    accessibilityLabel="Edit routine"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="create-outline" size={17} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteRoutine(r.id, r.name)}
+                    style={styles.actionProtocolBtn}
+                    accessibilityLabel="Delete routine"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons name="trash-outline" size={17} color={colors.textMuted} />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
         </View>
@@ -450,6 +460,18 @@ const styles = StyleSheet.create({
   protocolDays: {
     fontSize: 11,
     marginTop: 2,
+  },
+  protocolActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  actionProtocolBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   deleteProtocolBtn: {
     width: 32,

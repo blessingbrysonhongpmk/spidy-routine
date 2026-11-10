@@ -4,7 +4,7 @@ import { useSound } from '@/context/SoundContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { AnimatedProgress } from './AnimatedProgress';
@@ -42,6 +42,23 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
   const router = useRouter();
   const { user } = useAuth();
   const { playSound, triggerHaptic } = useSound();
+  const [liveTime, setLiveTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setLiveTime(
+        now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleMenuPress = () => {
     playSound('buttonTap');
@@ -117,6 +134,15 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
           <View style={styles.dateRow}>
             <Ionicons name="calendar-outline" size={13} color="#94A3B8" />
             <Text style={styles.dateText}>{dateHeader}</Text>
+            {liveTime ? (
+              <>
+                <Text style={styles.dotSeparator}>•</Text>
+                <Ionicons name="time-outline" size={13} color="#38BDF8" />
+                <Text style={[styles.dateText, { color: '#38BDF8', fontWeight: '700' }]}>
+                  {liveTime}
+                </Text>
+              </>
+            ) : null}
           </View>
         </View>
 
@@ -344,6 +370,11 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: '#94A3B8',
     fontWeight: '600',
+  },
+  dotSeparator: {
+    color: '#64748B',
+    fontSize: 12,
+    marginHorizontal: 3,
   },
   heroGraphicWrapper: {
     width: 110,
