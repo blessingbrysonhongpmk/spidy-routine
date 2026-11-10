@@ -1,9 +1,6 @@
 import { AddTaskButton } from '@/components/AddTaskButton';
 import { HeaderBranding } from '@/components/HeaderBranding';
-import { HeroPowerBar } from '@/components/HeroPowerBar';
-import { NextActivityCard } from '@/components/NextActivityCard';
 import { TimelineSection } from '@/components/TimelineSection';
-import { TodayMissionCard } from '@/components/TodayMissionCard';
 import { TodayTasksSection } from '@/components/TodayTasksSection';
 import { WebBackground } from '@/components/WebBackground';
 import { useDatabase } from '@/context/DatabaseContext';
@@ -113,49 +110,33 @@ export default function TodayDashboardScreen() {
           />
         }
       >
-        {/* 1. Hero Header: Greeting, Date, "RISE. TRAIN. CONQUER.", Streak & Dual-Arc Circular Progress Ring */}
+        {/* 1. Hero Header matching target UI design */}
         <HeaderBranding
           dateHeader={dateHeader}
           percentage={progress.percentage}
           streakDays={userStats?.streakDays || 1}
+          nextActivityTitle={nextActivity.title}
+          onNextActivityPress={handleNextActivityComplete}
           onProgressPress={() => router.push('/(tabs)/calendar')}
+          activeTab="today"
         />
 
-        {/* Interactive Legendary Superhero Power Bar (Spider-Man, Thor, Venom) */}
-        <HeroPowerBar />
-
-        {/* 2. Today's Mission Card: Bullseye Target, Complete 5 tasks, Count Tally */}
-        <TodayMissionCard
-          completedTasks={progress.completedTasks}
-          totalTasks={progress.totalTasks}
-          onPress={handleAddTaskPress}
-        />
-
-        {/* 3. Next Activity Card: High-voltage Thor Action Card with [✓ Done] */}
-        <NextActivityCard
-          title={nextActivity.title}
-          time={nextActivity.time}
-          category={nextActivity.category}
-          onComplete={handleNextActivityComplete}
-          isCompleted={nextActivity.isCompleted}
-        />
-
-        {/* 4. Daily Routine Timeline: Circuit connector, ☀️ ⛅ 🌅 🌙, summary previews & inline checklist */}
-        <TimelineSection
-          itemsByCategory={itemsByCategory}
-          onToggleItem={handleToggleRoutineItem}
-        />
-
-        {/* 5. Primary Action: + Deploy Objective Glowing Crimson Pill Button */}
+        {/* 2. Primary Quick Add Action */}
         <AddTaskButton onPress={handleAddTaskPress} />
 
-        {/* 6. Today's Independent Tasks: Filter chips (All/Pending/Done), Checkboxes with Web-Burst */}
+        {/* 3. Today's Tasks: Pending, Completed, Filter chips with one-tap toggle */}
         <TodayTasksSection
           tasks={tasks}
           onToggleTask={handleToggleTask}
           onEditTask={handleEditTask}
           onDeleteTask={removeTask}
           onAddTask={handleAddTaskPress}
+        />
+
+        {/* 4. Daily Routine Timeline (Morning, Afternoon, Evening, Night) */}
+        <TimelineSection
+          itemsByCategory={itemsByCategory}
+          onToggleItem={handleToggleRoutineItem}
         />
       </ScrollView>
     </SafeAreaView>

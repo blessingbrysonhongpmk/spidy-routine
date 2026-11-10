@@ -69,7 +69,7 @@ function AppNavigation() {
         <Stack.Screen
           name="modal-task"
           options={{
-            presentation: 'modal',
+            presentation: 'transparentModal',
             animation: 'slide_from_bottom',
           }}
         />

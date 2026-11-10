@@ -53,7 +53,7 @@ export const AddTaskButton: React.FC<AddTaskButtonProps> = ({ onPress }) => {
         </View>
 
         <Ionicons name="add" size={22} color="#FFFFFF" style={styles.plusIcon} />
-        <Text style={styles.buttonText}>Deploy Objective</Text>
+        <Text style={styles.buttonText}>Add Task</Text>
       </WebButtonInteraction>
     </View>
   );

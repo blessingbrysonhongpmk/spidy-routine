@@ -1,14 +1,12 @@
-import { useLightning } from '@/components/LightningEffect';
 import { WebButtonInteraction } from '@/components/WebButtonInteraction';
 import { Radii, Spacing } from '@/constants/theme';
 import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
-import { useTheme } from '@/hooks/use-theme';
-import { getTodayDateString } from '@/services/dateUtils';
+import { formatShortDate, getTodayDateString } from '@/services/dateUtils';
 import { TaskPriority } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -18,488 +16,777 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 export default function ModalTaskScreen() {
   const router = useRouter();
-  const colors = useTheme();
   const params = useLocalSearchParams<{ id?: string; initialDate?: string }>();
   const { tasks, allTasks, addTask, editTask, selectedDate } = useDatabase();
   const { playSound, triggerHaptic } = useSound();
-  const { triggerLightning } = useLightning();
 
   const isEditing = Boolean(params.id);
   const existingTask = isEditing
     ? allTasks.find((t) => t.id === params.id) || tasks.find((t) => t.id === params.id)
     : null;
 
+  // Primary input - the only required field
   const [title, setTitle] = useState(existingTask?.title || '');
-  const [description, setDescription] = useState(existingTask?.description || '');
-  const [date, setDate] = useState(
-    existingTask?.date || params.initialDate || selectedDate || getTodayDateString()
-  );
-  const [time, setTime] = useState(existingTask?.time || '10:00');
-  const [priority, setPriority] = useState<TaskPriority>(existingTask?.priority || 'medium');
-  const [reminderEnabled, setReminderEnabled] = useState(
-    existingTask?.reminder_enabled ?? true
-  );
 
+  // Smart defaults
   const todayStr = getTodayDateString();
+  const [date, setDate] = useState<string>(
+    existingTask?.date || params.initialDate || selectedDate || todayStr
+  );
+  const [time, setTime] = useState<string>(existingTask?.time || '');
+  const [reminderEnabled, setReminderEnabled] = useState<boolean>(
+    existingTask?.reminder_enabled ?? false
+  );
 
-  const handleQuickDate = (targetDate: string) => {
+  // Advanced options (collapsed by default)
+  const [priority, setPriority] = useState<TaskPriority>(existingTask?.priority || 'medium');
+  const [category, setCategory] = useState<string>('General');
+  const [description, setDescription] = useState(existingTask?.description || '');
+
+  // UI state
+  const [showMoreOptions, setShowMoreOptions] = useState(
+    Boolean(existingTask?.description || existingTask?.priority === 'high')
+  );
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDescriptionInput, setShowDescriptionInput] = useState(Boolean(existingTask?.description));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const datePresets = useMemo(() => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const in3Days = new Date(today);
+    in3Days.setDate(today.getDate() + 3);
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    return [
+      { label: 'Today', value: todayStr },
+      { label: 'Tomorrow', value: tomorrow.toISOString().split('T')[0] },
+      { label: 'In 3 Days', value: in3Days.toISOString().split('T')[0] },
+      { label: 'Next Week', value: nextWeek.toISOString().split('T')[0] },
+    ];
+  }, [todayStr]);
+
+  // Computed Date label matching design (e.g. "Today", "Mon, Nov 10")
+  const dateInfo = useMemo(() => {
+    if (!date) return { title: 'No Date', subtitle: 'Optional' };
+    if (date === todayStr) {
+      return { title: 'Today', subtitle: formatShortDate(date) };
+    }
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    if (date === tomorrowStr) {
+      return { title: 'Tomorrow', subtitle: formatShortDate(date) };
+    }
+    return { title: formatShortDate(date), subtitle: date };
+  }, [date, todayStr]);
+
+  const handleQuickDateSelect = (selectedDateStr: string) => {
     playSound('buttonTap');
     triggerHaptic('light');
-    setDate(targetDate);
+    setDate(selectedDateStr);
+    setShowDatePicker(false);
   };
 
-  const handleQuickTime = (presetTime: string) => {
+  const handleQuickTimeSelect = (selectedTimeStr: string) => {
     playSound('buttonTap');
     triggerHaptic('light');
-    setTime(presetTime);
+    setTime(selectedTimeStr);
+    setShowTimePicker(false);
+  };
+
+  const handleTogglePriority = () => {
+    playSound('buttonTap');
+    triggerHaptic('light');
+    const order: TaskPriority[] = ['medium', 'high', 'low'];
+    const nextIdx = (order.indexOf(priority) + 1) % order.length;
+    setPriority(order[nextIdx]);
+  };
+
+  const handleToggleCategory = () => {
+    playSound('buttonTap');
+    triggerHaptic('light');
+    const categories = ['General', 'Work', 'Health', 'Personal'];
+    const nextIdx = (categories.indexOf(category) + 1) % categories.length;
+    setCategory(categories[nextIdx]);
+  };
+
+  const handleToggleReminder = () => {
+    playSound('buttonTap');
+    triggerHaptic('light');
+    setReminderEnabled(!reminderEnabled);
   };
 
   const handleSave = async () => {
-    if (!title.trim()) {
-      Alert.alert('Mission Objective Required', 'Please enter a task title for this mission.');
+    if (isSubmitting) return;
+
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      Alert.alert('Task Title Required', 'Please enter what needs to get done.');
       return;
     }
 
+    setIsSubmitting(true);
     try {
       if (isEditing && existingTask) {
         await editTask({
           ...existingTask,
-          title: title.trim(),
+          title: trimmedTitle,
           description: description.trim(),
-          date,
-          time,
+          date: date || todayStr,
+          time: time.trim() || undefined,
           priority,
           reminder_enabled: reminderEnabled,
         });
       } else {
         await addTask({
-          title: title.trim(),
+          title: trimmedTitle,
           description: description.trim(),
-          date,
-          time,
+          date: date || todayStr,
+          time: time.trim() || undefined,
           priority,
           completed: false,
           reminder_enabled: reminderEnabled,
         });
       }
 
-      triggerLightning({ intensity: 'medium' });
+      playSound('taskSuccess');
       triggerHaptic('success');
       router.back();
     } catch (err) {
       console.error('Failed to save task:', err);
-      Alert.alert('Error', 'Could not save mission task. Please try again.');
+      Alert.alert('Error', 'Could not save task. Please try again.');
+      setIsSubmitting(false);
+    }
+  };
+
+  const getPriorityColor = () => {
+    switch (priority) {
+      case 'high':
+        return '#EF4444';
+      case 'low':
+        return '#38BDF8';
+      default:
+        return '#F59E0B';
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.keyboardContainer, { backgroundColor: colors.background }]}
-    >
-      <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-        {/* Header Bar */}
-        <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.cancelBtn}
-            accessibilityLabel="Close"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="close" size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            {isEditing ? 'EDIT MISSION' : 'NEW MISSION TASK'}
-          </Text>
-          <View style={{ width: 22 }} />
-        </View>
+    <View style={styles.modalOverlay}>
+      {/* Tap backdrop to dismiss */}
+      <TouchableWithoutFeedback onPress={() => router.back()}>
+        <View style={styles.backdrop} />
+      </TouchableWithoutFeedback>
 
-        <ScrollView style={styles.formScroll} showsVerticalScrollIndicator={false}>
-          {/* Title Input */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>MISSION TITLE *</Text>
-            <TextInput
-              style={[
-                styles.textInput,
-                {
-                  backgroundColor: colors.inputBackground,
-                  borderColor: colors.borderSubtle,
-                  color: colors.text,
-                },
-              ]}
-              placeholder="e.g. Strength Training Session / Review Protocol"
-              placeholderTextColor={colors.textMuted}
-              value={title}
-              onChangeText={setTitle}
-              autoFocus={!isEditing}
-            />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.sheetWrapper}
+      >
+        <View style={[styles.bottomSheet, { backgroundColor: '#0B0F17' }]}>
+          {/* Subtle Spiderweb Watermark Texture */}
+          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <Svg width="100%" height="100%" fill="none" opacity={0.1}>
+              <Path
+                d="M 200 0 L 200 300 M 0 150 L 400 150 M 50 0 L 350 300 M 350 0 L 50 300"
+                stroke="#38BDF8"
+                strokeWidth="0.8"
+              />
+              <Path
+                d="M 120 70 Q 200 100 280 70 Q 250 150 280 230 Q 200 200 120 230 Q 150 150 120 70 Z"
+                stroke="#EF4444"
+                strokeWidth="0.6"
+              />
+            </Svg>
           </View>
 
-          {/* Description Input */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>TACTICAL BRIEFING (OPTIONAL)</Text>
-            <TextInput
-              style={[
-                styles.textInput,
-                styles.textArea,
-                {
-                  backgroundColor: colors.inputBackground,
-                  borderColor: colors.borderSubtle,
-                  color: colors.text,
-                },
-              ]}
-              placeholder="Add checklist details or operational notes..."
-              placeholderTextColor={colors.textMuted}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-
-          {/* Priority Level Selector */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>MISSION PRIORITY</Text>
-            <View style={styles.priorityRow}>
-              {(
-                [
-                  { key: 'high', label: 'CRITICAL', icon: 'flash', color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
-                  { key: 'medium', label: 'TACTICAL', icon: 'shield-checkmark', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
-                  { key: 'low', label: 'ROUTINE', icon: 'leaf-outline', color: '#38BDF8', bg: 'rgba(56,189,248,0.15)' },
-                ] as const
-              ).map((p) => {
-                const isActive = priority === p.key;
-                return (
-                  <TouchableOpacity
-                    key={p.key}
-                    style={[
-                      styles.priorityPill,
-                      {
-                        backgroundColor: isActive ? p.bg : colors.inputBackground,
-                        borderColor: isActive ? p.color : colors.borderSubtle,
-                      },
-                    ]}
-                    onPress={() => {
-                      playSound('buttonTap');
-                      triggerHaptic('light');
-                      setPriority(p.key);
-                    }}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons
-                      name={p.icon as any}
-                      size={13}
-                      color={isActive ? p.color : colors.textMuted}
-                      style={{ marginRight: 4 }}
-                    />
-                    <Text
-                      style={[
-                        styles.priorityPillText,
-                        { color: isActive ? p.color : colors.textMuted, fontWeight: isActive ? '800' : '600' },
-                      ]}
-                    >
-                      {p.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Date & Quick Presets */}
-          <View style={styles.inputGroup}>
-            <View style={styles.labelRow}>
-              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>SCHEDULED DATE (YYYY-MM-DD)</Text>
-              <View style={styles.presetsRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.presetBtn,
-                    {
-                      backgroundColor: date === todayStr ? colors.primarySubtle : colors.inputBackground,
-                      borderColor: date === todayStr ? colors.primary : colors.borderSubtle,
-                    },
-                  ]}
-                  onPress={() => handleQuickDate(todayStr)}
-                >
-                  <Text
-                    style={[
-                      styles.presetBtnText,
-                      { color: date === todayStr ? colors.primary : colors.textMuted },
-                    ]}
-                  >
-                    Today
-                  </Text>
-                </TouchableOpacity>
+          {/* Sheet Header: (✓) Add Task and Close (✕) */}
+          <View style={styles.sheetHeader}>
+            <View style={styles.sheetHeaderLeft}>
+              <View style={styles.checkBadge}>
+                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
               </View>
+              <Text style={styles.sheetHeaderTitle}>
+                {isEditing ? 'Edit Task' : 'Add Task'}
+              </Text>
             </View>
-            <TextInput
-              style={[
-                styles.textInput,
-                {
-                  backgroundColor: colors.inputBackground,
-                  borderColor: colors.borderSubtle,
-                  color: colors.text,
-                },
-              ]}
-              value={date}
-              onChangeText={setDate}
-              placeholder="2026-11-09"
-              placeholderTextColor={colors.textMuted}
-            />
+
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.closeBtn}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Close"
+            >
+              <Ionicons name="close" size={22} color="#94A3B8" />
+            </TouchableOpacity>
           </View>
 
-          {/* Time & Quick Presets */}
-          <View style={styles.inputGroup}>
-            <View style={styles.labelRow}>
-              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>TIME (HH:MM)</Text>
-              <View style={styles.presetsRow}>
-                {['09:00', '14:00', '18:00', '21:00'].map((preset) => {
-                  const isActive = time === preset;
-                  return (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Main Prompt */}
+            <Text style={styles.promptHeading}>What needs to get done?</Text>
+
+            {/* Title Input Field with ⚡ Icon */}
+            <View style={styles.inputContainer}>
+              <Ionicons name="flash" size={17} color="#F59E0B" style={styles.flashIcon} />
+              <TextInput
+                style={styles.mainInput}
+                placeholder="e.g. Complete project assignment"
+                placeholderTextColor="#64748B"
+                value={title}
+                onChangeText={setTitle}
+                autoFocus={!isEditing}
+                returnKeyType="done"
+                onSubmitEditing={handleSave}
+              />
+            </View>
+
+            {/* Smart Date & Time Row */}
+            <View style={styles.dateTimeRow}>
+              {/* Date Card */}
+              <TouchableOpacity
+                style={[
+                  styles.selectorCard,
+                  showDatePicker && styles.selectorCardActive,
+                ]}
+                onPress={() => {
+                  playSound('buttonTap');
+                  triggerHaptic('light');
+                  setShowDatePicker(!showDatePicker);
+                  setShowTimePicker(false);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.calendarIconBox}>
+                  <Ionicons name="calendar" size={17} color="#38BDF8" />
+                </View>
+                <View style={styles.selectorTextBox}>
+                  <Text style={styles.selectorTitle}>{dateInfo.title}</Text>
+                  <Text style={styles.selectorSub}>{dateInfo.subtitle}</Text>
+                </View>
+                <Ionicons
+                  name={showDatePicker ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color="#94A3B8"
+                />
+              </TouchableOpacity>
+
+              {/* Time Card */}
+              <TouchableOpacity
+                style={[
+                  styles.selectorCard,
+                  showTimePicker && styles.selectorCardActive,
+                ]}
+                onPress={() => {
+                  playSound('buttonTap');
+                  triggerHaptic('light');
+                  setShowTimePicker(!showTimePicker);
+                  setShowDatePicker(false);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.timeIconBox}>
+                  <Ionicons name="time" size={17} color="#38BDF8" />
+                </View>
+                <View style={styles.selectorTextBox}>
+                  <Text style={styles.selectorTitle}>{time || 'Add time'}</Text>
+                  <Text style={styles.selectorSub}>{time ? 'Set' : 'Optional'}</Text>
+                </View>
+                <Ionicons
+                  name={showTimePicker ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color="#94A3B8"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Quick Date Presets Dropdown */}
+            {showDatePicker && (
+              <View style={styles.presetsBox}>
+                <Text style={styles.presetsHeader}>Select Due Date</Text>
+                <View style={styles.presetsRow}>
+                  {datePresets.map((p) => (
                     <TouchableOpacity
-                      key={preset}
+                      key={p.label}
                       style={[
-                        styles.presetBtn,
-                        {
-                          backgroundColor: isActive ? colors.primarySubtle : colors.inputBackground,
-                          borderColor: isActive ? colors.primary : colors.borderSubtle,
-                        },
+                        styles.presetChip,
+                        date === p.value && styles.presetChipActive,
                       ]}
-                      onPress={() => handleQuickTime(preset)}
+                      onPress={() => handleQuickDateSelect(p.value)}
                     >
                       <Text
                         style={[
-                          styles.presetBtnText,
-                          { color: isActive ? colors.primary : colors.textMuted },
+                          styles.presetChipText,
+                          date === p.value && styles.presetChipTextActive,
                         ]}
                       >
-                        {preset}
+                        {p.label}
                       </Text>
                     </TouchableOpacity>
-                  );
-                })}
+                  ))}
+                </View>
               </View>
-            </View>
-            <TextInput
-              style={[
-                styles.textInput,
-                {
-                  backgroundColor: colors.inputBackground,
-                  borderColor: colors.borderSubtle,
-                  color: colors.text,
-                },
-              ]}
-              value={time}
-              onChangeText={setTime}
-              placeholder="10:00"
-              placeholderTextColor={colors.textMuted}
-            />
-          </View>
+            )}
 
-          {/* Reminder Toggle */}
-          <TouchableOpacity
-            style={[
-              styles.toggleRow,
-              {
-                backgroundColor: colors.inputBackground,
-                borderColor: colors.borderSubtle,
-              },
-            ]}
-            onPress={() => setReminderEnabled(!reminderEnabled)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.toggleLeft}>
-              <Ionicons
-                name="notifications-outline"
-                size={19}
-                color={reminderEnabled ? colors.primary : colors.textMuted}
-              />
-              <View style={styles.toggleTextCol}>
-                <Text style={[styles.toggleTitle, { color: colors.text }]}>Mission Alert Reminder</Text>
-                <Text style={[styles.toggleSub, { color: colors.textMuted }]}>
-                  Receive a notification when it&apos;s time
-                </Text>
+            {/* Quick Time Presets Dropdown */}
+            {showTimePicker && (
+              <View style={styles.presetsBox}>
+                <Text style={styles.presetsHeader}>Select Time</Text>
+                <View style={styles.presetsRow}>
+                  {[
+                    { label: 'None', value: '' },
+                    { label: '09:00 AM', value: '09:00' },
+                    { label: '01:00 PM', value: '13:00' },
+                    { label: '05:00 PM', value: '17:00' },
+                    { label: '08:00 PM', value: '20:00' },
+                  ].map((p) => (
+                    <TouchableOpacity
+                      key={p.label}
+                      style={[
+                        styles.presetChip,
+                        time === p.value && styles.presetChipActive,
+                      ]}
+                      onPress={() => handleQuickTimeSelect(p.value)}
+                    >
+                      <Text
+                        style={[
+                          styles.presetChipText,
+                          time === p.value && styles.presetChipTextActive,
+                        ]}
+                      >
+                        {p.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
+            )}
 
-            <View
-              style={[
-                styles.switchTrack,
-                { backgroundColor: reminderEnabled ? colors.primary : colors.borderMuted },
-              ]}
+            {/* Expandable "More options" Divider */}
+            <TouchableOpacity
+              style={styles.moreOptionsDivider}
+              onPress={() => {
+                playSound('buttonTap');
+                triggerHaptic('light');
+                setShowMoreOptions(!showMoreOptions);
+              }}
+              activeOpacity={0.7}
             >
-              <View
-                style={[
-                  styles.switchThumb,
-                  reminderEnabled && styles.switchThumbActive,
-                ]}
-              />
-            </View>
-          </TouchableOpacity>
+              <View style={styles.dividerLine} />
+              <View style={styles.moreOptionsPill}>
+                <Text style={styles.moreOptionsText}>More options</Text>
+                <Ionicons
+                  name={showMoreOptions ? 'chevron-up' : 'chevron-down'}
+                  size={14}
+                  color="#94A3B8"
+                  style={{ marginLeft: 4 }}
+                />
+              </View>
+              <View style={styles.dividerLine} />
+            </TouchableOpacity>
 
-          {/* Save Action Button with Web Pull */}
-          <WebButtonInteraction
-            style={[styles.saveBtn, { backgroundColor: colors.primary }]}
-            onPress={handleSave}
-            variant="primary"
-            sound="buttonTap"
-            haptic="medium"
-          >
-            <Text style={styles.saveBtnText}>
-              {isEditing ? 'UPDATE MISSION' : 'LOCK IN MISSION'}
-            </Text>
-          </WebButtonInteraction>
-        </ScrollView>
-      </View>
-    </KeyboardAvoidingView>
+            {/* 4 Quick Tiles for More Options */}
+            {showMoreOptions && (
+              <View style={styles.optionsTilesRow}>
+                {/* 1. Description Tile */}
+                <TouchableOpacity
+                  style={[
+                    styles.optionTile,
+                    (showDescriptionInput || description.length > 0) && styles.optionTileActive,
+                  ]}
+                  onPress={() => {
+                    playSound('buttonTap');
+                    triggerHaptic('light');
+                    setShowDescriptionInput(!showDescriptionInput);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="document-text-outline" size={20} color="#38BDF8" />
+                  <Text style={styles.optionTileLabel}>Description</Text>
+                  <Text style={styles.optionTileSub}>
+                    {description ? 'Added' : 'Optional'}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* 2. Priority Tile */}
+                <TouchableOpacity
+                  style={styles.optionTile}
+                  onPress={handleTogglePriority}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="flag" size={20} color={getPriorityColor()} />
+                  <Text style={styles.optionTileLabel}>Priority</Text>
+                  <Text style={[styles.optionTileSub, { color: getPriorityColor(), fontWeight: '700' }]}>
+                    {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* 3. Category Tile */}
+                <TouchableOpacity
+                  style={styles.optionTile}
+                  onPress={handleToggleCategory}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="grid-outline" size={20} color="#38BDF8" />
+                  <Text style={styles.optionTileLabel}>Category</Text>
+                  <Text style={[styles.optionTileSub, { color: '#38BDF8', fontWeight: '700' }]}>
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* 4. Reminder Tile */}
+                <TouchableOpacity
+                  style={[styles.optionTile, reminderEnabled && styles.optionTileActive]}
+                  onPress={handleToggleReminder}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={reminderEnabled ? 'notifications' : 'notifications-outline'}
+                    size={20}
+                    color={reminderEnabled ? '#EF4444' : '#94A3B8'}
+                  />
+                  <Text style={styles.optionTileLabel}>Reminder</Text>
+                  <Text
+                    style={[
+                      styles.optionTileSub,
+                      { color: reminderEnabled ? '#EF4444' : '#94A3B8', fontWeight: '700' },
+                    ]}
+                  >
+                    {reminderEnabled ? 'On' : 'Off'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Description Multi-line Input (when active) */}
+            {showMoreOptions && showDescriptionInput && (
+              <View style={styles.descriptionBox}>
+                <TextInput
+                  style={styles.descriptionInput}
+                  placeholder="Add notes, checklists or subtasks..."
+                  placeholderTextColor="#64748B"
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+            )}
+
+            {/* Save Task Action Button */}
+            <WebButtonInteraction
+              style={[
+                styles.saveTaskBtn,
+                isSubmitting && { opacity: 0.6 },
+              ]}
+              onPress={handleSave}
+              variant="primary"
+              sound="webShoot"
+              haptic="medium"
+              disabled={isSubmitting}
+            >
+              <Ionicons name="checkmark" size={20} color="#FFFFFF" style={{ marginRight: 6 }} />
+              <Text style={styles.saveTaskBtnText}>
+                {isSubmitting ? 'Saving...' : 'Save Task'}
+              </Text>
+            </WebButtonInteraction>
+          </ScrollView>
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardContainer: {
+  modalOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
   },
-  modalSheet: {
-    flex: 1,
-    paddingTop: Spacing.md,
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  sheetWrapper: {
+    width: '100%',
+  },
+  bottomSheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.22)',
     paddingHorizontal: Spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-  },
-  cancelBtn: {
-    padding: Spacing.xs,
-  },
-  headerTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  formScroll: {
-    flex: 1,
     paddingTop: Spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? 38 : Spacing.xl,
+    overflow: 'hidden',
   },
-  inputGroup: {
-    marginBottom: Spacing.lg,
-  },
-  labelRow: {
+  sheetHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    justifyContent: 'space-between',
+    paddingBottom: Spacing.sm,
   },
-  inputLabel: {
-    fontSize: 10.5,
+  sheetHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  checkBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E50914',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#E50914',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sheetHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollContent: {
+    paddingTop: Spacing.xs,
+    paddingBottom: Spacing.sm,
+  },
+  promptHeading: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+    letterSpacing: 0.2,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#121824',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'rgba(56, 189, 248, 0.45)',
+    height: 54,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.md,
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  flashIcon: {
+    marginRight: 8,
+  },
+  mainInput: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 15.5,
+    fontWeight: '500',
+  },
+  dateTimeRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: Spacing.md,
+  },
+  selectorCard: {
+    flex: 1,
+    height: 60,
+    backgroundColor: '#151D2A',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    gap: 8,
+  },
+  selectorCardActive: {
+    borderColor: '#38BDF8',
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+  },
+  calendarIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeIconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectorTextBox: {
+    flex: 1,
+  },
+  selectorTitle: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
     fontWeight: '700',
-    letterSpacing: 0.8,
-    marginBottom: Spacing.xs,
+  },
+  selectorSub: {
+    color: '#94A3B8',
+    fontSize: 11,
+    marginTop: 1,
+  },
+  presetsBox: {
+    backgroundColor: '#151D2A',
+    borderRadius: 14,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  presetsHeader: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
   },
   presetsRow: {
     flexDirection: 'row',
-    gap: 4,
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  presetBtn: {
-    paddingVertical: 2,
-    paddingHorizontal: 7,
-    borderRadius: Radii.xs,
+  presetChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: Radii.pill,
+    backgroundColor: '#1E293B',
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  presetBtnText: {
-    fontSize: 10,
+  presetChipActive: {
+    backgroundColor: 'rgba(56, 189, 248, 0.2)',
+    borderColor: '#38BDF8',
+  },
+  presetChipText: {
+    color: '#94A3B8',
+    fontSize: 12,
     fontWeight: '600',
   },
-  textInput: {
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 11,
-    fontSize: 14,
+  presetChipTextActive: {
+    color: '#38BDF8',
+    fontWeight: '700',
   },
-  textArea: {
-    height: 76,
-    textAlignVertical: 'top',
-  },
-  priorityRow: {
+  moreOptionsDivider: {
     flexDirection: 'row',
-    gap: Spacing.sm,
-    marginTop: 4,
+    alignItems: 'center',
+    marginVertical: Spacing.md,
   },
-  priorityPill: {
+  dividerLine: {
     flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.09)',
+  },
+  moreOptionsPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: Radii.sm,
-    borderWidth: 1.5,
+    paddingHorizontal: 12,
   },
-  priorityPillText: {
-    fontSize: 11,
-    letterSpacing: 0.5,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderRadius: Radii.sm,
-    borderWidth: 1,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  toggleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  toggleTextCol: {
-    marginLeft: Spacing.md,
-  },
-  toggleTitle: {
-    fontSize: 13,
+  moreOptionsText: {
+    color: '#94A3B8',
+    fontSize: 12.5,
     fontWeight: '600',
   },
-  toggleSub: {
+  optionsTilesRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: Spacing.md,
+  },
+  optionTile: {
+    flex: 1,
+    backgroundColor: '#151D2A',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    gap: 3,
+  },
+  optionTileActive: {
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: 'rgba(56, 189, 248, 0.06)',
+  },
+  optionTileLabel: {
     fontSize: 11,
+    color: '#E2E8F0',
+    fontWeight: '600',
     marginTop: 2,
   },
-  switchTrack: {
-    width: 42,
-    height: 24,
-    borderRadius: 12,
-    padding: 2,
-    justifyContent: 'center',
+  optionTileSub: {
+    fontSize: 10,
+    color: '#94A3B8',
   },
-  switchThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+  descriptionBox: {
+    backgroundColor: '#151D2A',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
   },
-  switchThumbActive: {
-    alignSelf: 'flex-end',
+  descriptionInput: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    minHeight: 60,
+    textAlignVertical: 'top',
   },
-  saveBtn: {
-    height: 48,
-    borderRadius: Radii.sm,
+  saveTaskBtn: {
+    height: 52,
+    borderRadius: Radii.pill,
+    backgroundColor: '#E50914',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xxxl,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    shadowColor: '#E50914',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  saveBtnText: {
+  saveTaskBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '800',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
 });

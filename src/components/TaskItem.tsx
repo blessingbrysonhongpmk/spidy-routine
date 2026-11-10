@@ -53,7 +53,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
 
   const handleDelete = () => {
     Alert.alert(
-      'Delete Mission Task',
+      'Delete Task',
       `Are you sure you want to remove "${task.title}"?`,
       [
         { text: 'Cancel', style: 'cancel' },

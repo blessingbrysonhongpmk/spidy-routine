@@ -101,7 +101,7 @@ export const TodayTasksSection: React.FC<TodayTasksSectionProps> = ({
           </Text>
           <Text style={[styles.emptySub, { color: colors.textMuted }]}>
             {filter === 'all'
-              ? 'Tap "Deploy Objective" below to schedule an objective.'
+              ? 'Tap "Add Task" below to create your first task.'
               : 'Keep up the momentum.'}
           </Text>
         </View>

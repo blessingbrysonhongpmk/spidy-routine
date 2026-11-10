@@ -113,8 +113,8 @@ export default function TasksScreen() {
       {/* Screen Header */}
       <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
         <View style={styles.headerLeft}>
-          <Text style={[styles.headerSubtitle, { color: colors.primary }]}>MISSION OBJECTIVES</Text>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Task Command</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.primary }]}>TASK MANAGEMENT</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Tasks</Text>
         </View>
 
         <WebButtonInteraction
