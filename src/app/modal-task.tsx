@@ -5,6 +5,7 @@ import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
 import { useTheme } from '@/hooks/use-theme';
 import { getTodayDateString } from '@/services/dateUtils';
+import { TaskPriority } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -39,6 +40,7 @@ export default function ModalTaskScreen() {
     existingTask?.date || params.initialDate || selectedDate || getTodayDateString()
   );
   const [time, setTime] = useState(existingTask?.time || '10:00');
+  const [priority, setPriority] = useState<TaskPriority>(existingTask?.priority || 'medium');
   const [reminderEnabled, setReminderEnabled] = useState(
     existingTask?.reminder_enabled ?? true
   );
@@ -71,6 +73,7 @@ export default function ModalTaskScreen() {
           description: description.trim(),
           date,
           time,
+          priority,
           reminder_enabled: reminderEnabled,
         });
       } else {
@@ -79,6 +82,7 @@ export default function ModalTaskScreen() {
           description: description.trim(),
           date,
           time,
+          priority,
           completed: false,
           reminder_enabled: reminderEnabled,
         });
@@ -156,6 +160,55 @@ export default function ModalTaskScreen() {
               multiline
               numberOfLines={3}
             />
+          </View>
+
+          {/* Priority Level Selector */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textMuted }]}>MISSION PRIORITY</Text>
+            <View style={styles.priorityRow}>
+              {(
+                [
+                  { key: 'high', label: 'CRITICAL', icon: 'flash', color: '#EF4444', bg: 'rgba(239,68,68,0.15)' },
+                  { key: 'medium', label: 'TACTICAL', icon: 'shield-checkmark', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+                  { key: 'low', label: 'ROUTINE', icon: 'leaf-outline', color: '#38BDF8', bg: 'rgba(56,189,248,0.15)' },
+                ] as const
+              ).map((p) => {
+                const isActive = priority === p.key;
+                return (
+                  <TouchableOpacity
+                    key={p.key}
+                    style={[
+                      styles.priorityPill,
+                      {
+                        backgroundColor: isActive ? p.bg : colors.inputBackground,
+                        borderColor: isActive ? p.color : colors.borderSubtle,
+                      },
+                    ]}
+                    onPress={() => {
+                      playSound('buttonTap');
+                      triggerHaptic('light');
+                      setPriority(p.key);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name={p.icon as any}
+                      size={13}
+                      color={isActive ? p.color : colors.textMuted}
+                      style={{ marginRight: 4 }}
+                    />
+                    <Text
+                      style={[
+                        styles.priorityPillText,
+                        { color: isActive ? p.color : colors.textMuted, fontWeight: isActive ? '800' : '600' },
+                      ]}
+                    >
+                      {p.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
           {/* Date & Quick Presets */}
@@ -374,6 +427,25 @@ const styles = StyleSheet.create({
   textArea: {
     height: 76,
     textAlignVertical: 'top',
+  },
+  priorityRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginTop: 4,
+  },
+  priorityPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: Radii.sm,
+    borderWidth: 1.5,
+  },
+  priorityPillText: {
+    fontSize: 11,
+    letterSpacing: 0.5,
   },
   toggleRow: {
     flexDirection: 'row',

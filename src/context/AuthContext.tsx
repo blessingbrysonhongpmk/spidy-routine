@@ -1,5 +1,3 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { UserProfile } from '@/types';
 import {
   getPersistedUser,
   loginWithEmail,
@@ -10,6 +8,8 @@ import {
   resetUserProfileToBlank,
   updateUserProfile,
 } from '@/services/auth';
+import { UserProfile } from '@/types';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface AuthContextType {
   user: UserProfile | null;

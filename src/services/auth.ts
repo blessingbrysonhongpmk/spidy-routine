@@ -36,8 +36,15 @@ export const BLANK_USER: UserProfile = {
   email: '',
   callsign: '',
   heroArchetype: 'spiderman',
+  bio: '',
+  dob: '',
+  wakeTime: '06:00 AM',
   dailyTarget: 5,
-  motto: '',
+  motto: 'Your Day. Your Mission.',
+  avatarType: 'spiderman',
+  themePreference: 'dark',
+  soundEnabled: true,
+  notificationsEnabled: true,
   isGuest: true,
 };
 
@@ -65,6 +72,9 @@ export async function persistUser(user: UserProfile): Promise<void> {
   }
   if (user.heroArchetype) {
     await setAppSetting('hero_archetype', user.heroArchetype);
+  }
+  if (user.themePreference) {
+    await setAppSetting('theme_mode', user.themePreference);
   }
 }
 

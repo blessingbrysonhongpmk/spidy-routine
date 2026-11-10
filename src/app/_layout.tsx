@@ -81,6 +81,13 @@ function AppNavigation() {
           }}
         />
         <Stack.Screen
+          name="profile"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
           name="auth"
           options={{
             presentation: 'fullScreenModal',

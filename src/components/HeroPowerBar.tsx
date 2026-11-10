@@ -94,31 +94,31 @@ export const HeroPowerBar: React.FC<HeroPowerBarProps> = ({ onPowerActivated }) 
     subtle: string;
     ability: string;
   }[] = [
-    {
-      id: 'spiderman',
-      label: 'SPIDEY',
-      icon: 'radio-outline',
-      color: colors.primary,
-      subtle: colors.primarySubtle,
-      ability: 'Web Agility',
-    },
-    {
-      id: 'thor',
-      label: 'THOR',
-      icon: 'flash-outline',
-      color: colors.secondary,
-      subtle: colors.secondarySubtle,
-      ability: 'God of Thunder',
-    },
-    {
-      id: 'venom',
-      label: 'VENOM',
-      icon: 'water-outline',
-      color: colors.purple,
-      subtle: colors.purpleSubtle,
-      ability: 'Symbiote Surge',
-    },
-  ];
+      {
+        id: 'spiderman',
+        label: 'SPIDEY',
+        icon: 'radio-outline',
+        color: colors.primary,
+        subtle: colors.primarySubtle,
+        ability: 'Web Agility',
+      },
+      {
+        id: 'thor',
+        label: 'THOR',
+        icon: 'flash-outline',
+        color: colors.secondary,
+        subtle: colors.secondarySubtle,
+        ability: 'God of Thunder',
+      },
+      {
+        id: 'venom',
+        label: 'VENOM',
+        icon: 'water-outline',
+        color: colors.purple,
+        subtle: colors.purpleSubtle,
+        ability: 'Symbiote Surge',
+      },
+    ];
 
   return (
     <View style={styles.container}>

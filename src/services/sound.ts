@@ -9,6 +9,9 @@ export type SoundEffectType =
   | 'symbioteWhoosh'
   | 'buttonTap'
   | 'taskSuccess'
+  | 'missionComplete'
+  | 'reminderAlert'
+  | 'successConfirm'
   | 'deleteAction'
   | 'startupWhoosh'
   | 'logoReveal';
@@ -185,6 +188,40 @@ function createLogoRevealUri(): string {
   }, 0.38);
 }
 
+// 10. Mission Complete: Triumphant superhero brass-like ascending chord
+function createMissionCompleteUri(): string {
+  return generateWavDataUri(22050, (t) => {
+    const env = Math.exp(-t * 4);
+    const n1 = Math.sin(2 * Math.PI * 523.25 * t) * 0.35; // C5
+    const n2 = Math.sin(2 * Math.PI * 659.25 * t) * 0.30; // E5
+    const n3 = Math.sin(2 * Math.PI * 783.99 * t) * 0.25; // G5
+    const n4 = Math.sin(2 * Math.PI * 1046.50 * t) * 0.20; // C6
+    return (n1 + n2 + n3 + n4) * env;
+  }, 0.55);
+}
+
+// 11. Reminder Alert: tactical dual-ping radar notification
+function createReminderAlertUri(): string {
+  return generateWavDataUri(22050, (t) => {
+    const env1 = t < 0.12 ? Math.exp(-t * 22) : 0;
+    const t2 = t - 0.12;
+    const env2 = t >= 0.12 ? Math.exp(-t2 * 20) : 0;
+    const p1 = Math.sin(2 * Math.PI * 987.77 * t) * env1; // B5
+    const p2 = Math.sin(2 * Math.PI * 1318.51 * t) * env2; // E6
+    return (p1 + p2) * 0.6;
+  }, 0.32);
+}
+
+// 12. Success Confirmation: warm resonant affirmation
+function createSuccessConfirmUri(): string {
+  return generateWavDataUri(22050, (t) => {
+    const env = Math.exp(-t * 8);
+    const fundamental = Math.sin(2 * Math.PI * 659.25 * t) * 0.5; // E5
+    const third = Math.sin(2 * Math.PI * 830.61 * t) * 0.35; // G#5
+    return (fundamental + third) * env;
+  }, 0.3);
+}
+
 export async function initSoundService(): Promise<void> {
   try {
     try {
@@ -213,6 +250,9 @@ export async function initSoundService(): Promise<void> {
       symbioteWhoosh: createSymbioteWhooshUri,
       buttonTap: createButtonTapUri,
       taskSuccess: createTaskSuccessUri,
+      missionComplete: createMissionCompleteUri,
+      reminderAlert: createReminderAlertUri,
+      successConfirm: createSuccessConfirmUri,
       deleteAction: createDeleteActionUri,
       startupWhoosh: createStartupWhooshUri,
       logoReveal: createLogoRevealUri,

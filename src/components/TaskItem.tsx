@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLightning } from './LightningEffect';
+import { TensileWebFilament } from './TensileWebFilament';
 import { WebCompletionAnimation } from './WebCompletionAnimation';
 
 interface TaskItemProps {
@@ -89,7 +90,12 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         accessibilityState={{ checked: task.completed }}
         accessibilityLabel={`Mark ${task.title} as ${task.completed ? 'incomplete' : 'complete'}`}
       >
-        {showBurst && <WebCompletionAnimation onAnimationEnd={() => setShowBurst(false)} />}
+        {showBurst && (
+          <>
+            <TensileWebFilament onComplete={() => setShowBurst(false)} size={68} />
+            <WebCompletionAnimation size={58} />
+          </>
+        )}
         <View
           style={[
             styles.checkbox,
@@ -124,6 +130,33 @@ export const TaskItem: React.FC<TaskItemProps> = ({
         </Text>
 
         <View style={styles.metaRow}>
+          {/* Priority Indicator Pill */}
+          {task.priority && task.priority !== 'medium' ? (
+            <View
+              style={[
+                styles.priorityBadge,
+                task.priority === 'high'
+                  ? { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }
+                  : { backgroundColor: colors.secondarySubtle, borderColor: colors.secondaryBorder },
+              ]}
+            >
+              <View
+                style={[
+                  styles.priorityDot,
+                  { backgroundColor: task.priority === 'high' ? colors.primary : colors.secondary },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.priorityText,
+                  { color: task.priority === 'high' ? colors.primary : colors.secondary },
+                ]}
+              >
+                {task.priority.toUpperCase()}
+              </Text>
+            </View>
+          ) : null}
+
           {task.time ? (
             <View style={[styles.timeBadge, { backgroundColor: colors.inputBackground }]}>
               <Ionicons
@@ -219,6 +252,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
     gap: Spacing.sm,
+  },
+  priorityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: Radii.xs,
+    borderWidth: 0.8,
+  },
+  priorityDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  priorityText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   timeBadge: {
     flexDirection: 'row',

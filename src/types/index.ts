@@ -1,11 +1,14 @@
 export type RoutineCategory = 'morning' | 'afternoon' | 'evening' | 'night';
 
+export type TaskPriority = 'high' | 'medium' | 'low';
+
 export interface Task {
   id: string;
   title: string;
   description?: string;
   date: string; // YYYY-MM-DD
   time?: string; // HH:mm (e.g. "14:30")
+  priority?: TaskPriority; // 'high' | 'medium' | 'low'
   completed: boolean;
   reminder_enabled: boolean;
   reminder_time?: string;
@@ -44,13 +47,20 @@ export interface RoutineCompletion {
 
 export interface UserProfile {
   uid: string;
-  name: string;
+  name: string; // Full Name
   email: string;
-  callsign?: string;
+  callsign?: string; // Display Name / Codename
   heroArchetype?: 'spiderman' | 'thor' | 'venom' | 'custom';
-  dailyTarget?: number;
-  motto?: string;
+  bio?: string; // Personal introduction
+  dob?: string; // Optional Date of Birth
+  wakeTime?: string; // Preferred wake-up time (e.g. "06:00 AM")
+  dailyTarget?: number; // Target missions per day
+  motto?: string; // Tactical motto
   photoURL?: string;
+  avatarType?: 'spiderman' | 'thor' | 'venom' | 'custom';
+  themePreference?: 'dark' | 'light' | 'system';
+  soundEnabled?: boolean;
+  notificationsEnabled?: boolean;
   isGuest: boolean;
 }
 

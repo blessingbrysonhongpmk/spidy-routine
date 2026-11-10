@@ -202,7 +202,11 @@ export default function SettingsScreen() {
                 </View>
                 <TouchableOpacity
                   style={[styles.editBadge, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
-                  onPress={() => setProfileModalVisible(true)}
+                  onPress={() => {
+                    playSound('buttonTap');
+                    triggerHaptic('light');
+                    router.push('/profile');
+                  }}
                   activeOpacity={0.7}
                 >
                   <Ionicons name="create-outline" size={12} color={colors.primary} />

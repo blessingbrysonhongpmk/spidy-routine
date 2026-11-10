@@ -80,6 +80,13 @@ export async function initDatabase(): Promise<void> {
   await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('intro_sound_enabled', 'true')`);
   await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('intro_has_launched', 'false')`);
   await db.runAsync(`INSERT OR IGNORE INTO app_settings (key, value) VALUES ('reduced_motion', 'false')`);
+
+  // Safe migration for task priority
+  try {
+    await db.execAsync(`ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'medium';`);
+  } catch {
+    // Column already exists
+  }
 }
 
 /**
@@ -170,6 +177,7 @@ export async function getTasksForDate(date: string): Promise<Task[]> {
   );
   return rows.map((r) => ({
     ...r,
+    priority: r.priority || 'medium',
     completed: r.completed === 1,
     reminder_enabled: r.reminder_enabled === 1,
   }));
@@ -182,6 +190,7 @@ export async function getAllTasks(): Promise<Task[]> {
   );
   return rows.map((r) => ({
     ...r,
+    priority: r.priority || 'medium',
     completed: r.completed === 1,
     reminder_enabled: r.reminder_enabled === 1,
   }));
@@ -195,14 +204,15 @@ export async function createTask(
   const now = new Date().toISOString();
 
   await db.runAsync(
-    `INSERT INTO tasks (id, title, description, date, time, completed, reminder_enabled, reminder_time, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO tasks (id, title, description, date, time, priority, completed, reminder_enabled, reminder_time, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       task.title,
       task.description || '',
       task.date,
       task.time || '',
+      task.priority || 'medium',
       task.completed ? 1 : 0,
       task.reminder_enabled ? 1 : 0,
       task.reminder_time || '',
@@ -214,6 +224,7 @@ export async function createTask(
   return {
     id,
     ...task,
+    priority: task.priority || 'medium',
     created_at: now,
     updated_at: now,
   };
@@ -224,13 +235,14 @@ export async function updateTask(task: Task): Promise<void> {
   const now = new Date().toISOString();
   await db.runAsync(
     `UPDATE tasks
-     SET title = ?, description = ?, date = ?, time = ?, completed = ?, reminder_enabled = ?, reminder_time = ?, updated_at = ?
+     SET title = ?, description = ?, date = ?, time = ?, priority = ?, completed = ?, reminder_enabled = ?, reminder_time = ?, updated_at = ?
      WHERE id = ?`,
     [
       task.title,
       task.description || '',
       task.date,
       task.time || '',
+      task.priority || 'medium',
       task.completed ? 1 : 0,
       task.reminder_enabled ? 1 : 0,
       task.reminder_time || '',

@@ -24,7 +24,7 @@ import {
   View
 } from 'react-native';
 
-type TaskFilter = 'all' | 'today' | 'upcoming' | 'completed';
+type TaskFilter = 'all' | 'today' | 'critical' | 'upcoming' | 'completed';
 
 export default function TasksScreen() {
   const router = useRouter();
@@ -74,6 +74,8 @@ export default function TasksScreen() {
     // Filter tab
     if (activeFilter === 'today') {
       result = result.filter((t) => t.date === todayStr);
+    } else if (activeFilter === 'critical') {
+      result = result.filter((t) => t.priority === 'high' && !t.completed);
     } else if (activeFilter === 'upcoming') {
       result = result.filter((t) => t.date > todayStr && !t.completed);
     } else if (activeFilter === 'completed') {
@@ -188,6 +190,7 @@ export default function TasksScreen() {
             [
               { key: 'all', label: 'All Tasks' },
               { key: 'today', label: 'Due Today' },
+              { key: 'critical', label: 'Critical ⚡' },
               { key: 'upcoming', label: 'Upcoming' },
               { key: 'completed', label: 'Completed' },
             ] as const

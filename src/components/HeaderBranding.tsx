@@ -5,10 +5,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { AnimatedProgress } from './AnimatedProgress';
-import { ModalHeroProfile } from './ModalHeroProfile';
 import { WebButtonInteraction } from './WebButtonInteraction';
 
 interface HeaderBrandingProps {
@@ -34,7 +33,6 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
   const colors = useTheme();
   const { user } = useAuth();
   const { playSound, triggerHaptic } = useSound();
-  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   const handleNotificationPress = () => {
     playSound('buttonTap');
@@ -45,7 +43,7 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
   const handleProfilePress = () => {
     playSound('buttonTap');
     triggerHaptic('light');
-    setProfileModalVisible(true);
+    router.push('/profile');
   };
 
   const isUnregistered = !user?.name;
@@ -97,7 +95,7 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
         {/* Left Column: Greeting, Subtitle, Date, and Comic Brush Motto */}
         <View style={styles.heroLeftCol}>
           {isUnregistered ? (
-            <TouchableOpacity onPress={() => setProfileModalVisible(true)} activeOpacity={0.8}>
+            <TouchableOpacity onPress={handleProfilePress} activeOpacity={0.8}>
               <Text style={[styles.greetingText, { color: colors.text }]}>
                 Hello, <Text style={{ color: colors.primary }}>Agent!</Text> 🛡️
               </Text>
@@ -114,7 +112,7 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
               </View>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={() => setProfileModalVisible(true)} activeOpacity={0.8}>
+            <TouchableOpacity onPress={handleProfilePress} activeOpacity={0.8}>
               <Text style={[styles.greetingText, { color: colors.text }]}>
                 Hello, <Text style={{ color: colors.primary }}>{heroCodename}!</Text> 👋
               </Text>
@@ -172,12 +170,6 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
           </TouchableOpacity>
         )}
       </View>
-
-      {/* Hero Profile Setup Modal */}
-      <ModalHeroProfile
-        visible={profileModalVisible}
-        onClose={() => setProfileModalVisible(false)}
-      />
     </View>
   );
 };

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLightning } from './LightningEffect';
+import { TensileWebFilament } from './TensileWebFilament';
 import { WebCompletionAnimation } from './WebCompletionAnimation';
 
 interface RoutineItemRowProps {
@@ -67,7 +68,12 @@ export const RoutineItemRow: React.FC<RoutineItemRowProps> = ({
         accessibilityState={{ checked: isDone }}
         accessibilityLabel={`Mark ${item.title} as ${isDone ? 'incomplete' : 'complete'}`}
       >
-        {showBurst && <WebCompletionAnimation onAnimationEnd={() => setShowBurst(false)} />}
+        {showBurst && (
+          <>
+            <TensileWebFilament onComplete={() => setShowBurst(false)} size={64} />
+            <WebCompletionAnimation size={54} />
+          </>
+        )}
         <View
           style={[
             styles.checkbox,

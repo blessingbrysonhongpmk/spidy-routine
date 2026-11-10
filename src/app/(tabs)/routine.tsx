@@ -31,6 +31,7 @@ export default function RoutineScreen() {
     toggleRoutineItem,
     removeRoutine,
     progress,
+    loadStarterProtocols,
   } = useDatabase();
 
   const { triggerLightning } = useLightning();
@@ -207,6 +208,24 @@ export default function RoutineScreen() {
             <Text style={[styles.emptyStateSub, { color: colors.textMuted }]}>
               Tap &quot;New Protocol&quot; above to schedule your {currentCategoryObj.title.toLowerCase()} routine.
             </Text>
+            {routines.length === 0 && (
+              <TouchableOpacity
+                style={[
+                  styles.loadStarterBtn,
+                  { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder },
+                ]}
+                onPress={async () => {
+                  await loadStarterProtocols();
+                  triggerLightning({ intensity: 'medium' });
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="sparkles" size={14} color={colors.primary} />
+                <Text style={[styles.loadStarterText, { color: colors.primary }]}>
+                  Load Recommended Hero Protocols
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           currentItems.map((item) => (
@@ -384,6 +403,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     lineHeight: 18,
+  },
+  loadStarterBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    marginTop: Spacing.lg,
+  },
+  loadStarterText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   protocolManageSection: {
     marginTop: Spacing.xl,
