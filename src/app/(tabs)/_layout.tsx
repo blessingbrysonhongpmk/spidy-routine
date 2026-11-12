@@ -1,6 +1,5 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
 import { CustomTabBar } from '@/components/CustomTabBar';
+import { Tabs } from 'expo-router';
 
 export default function TabsLayout() {
   return (
@@ -14,7 +13,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Today',
+          title: 'Home',
         }}
       />
       <Tabs.Screen

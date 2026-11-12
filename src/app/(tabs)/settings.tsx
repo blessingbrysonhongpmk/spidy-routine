@@ -1,5 +1,6 @@
 import { ModalHeroProfile } from '@/components/ModalHeroProfile';
 import { SpiderEmblem } from '@/components/SpiderEmblem';
+import { SpidyAvatar } from '@/components/SpidyLogo';
 import { WebBackground } from '@/components/WebBackground';
 import { WebButtonInteraction } from '@/components/WebButtonInteraction';
 import { Radii, Spacing } from '@/constants/theme';
@@ -9,13 +10,12 @@ import { useSound } from '@/context/SoundContext';
 import { ThemeMode, useThemeContext } from '@/context/ThemeContext';
 import { useTheme } from '@/hooks/use-theme';
 import { getAppSetting, setAppSetting } from '@/services/database';
+import { confirmAction, showAlert } from '@/services/platformAlert';
 import { SoundEffectType } from '@/services/sound';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -79,8 +79,16 @@ export default function SettingsScreen() {
   };
 
   const handleThemeSelect = async (mode: ThemeMode) => {
-    playSound('buttonTap');
-    triggerHaptic('light');
+    if (mode === 'spiderman' || mode === 'dark') {
+      playSound('webShoot');
+    } else if (mode === 'thor') {
+      playSound('thunderMilestone');
+    } else if (mode === 'venom') {
+      playSound('symbioteWhoosh');
+    } else {
+      playSound('buttonTap');
+    }
+    triggerHaptic('medium');
     await setThemeMode(mode);
   };
 
@@ -91,58 +99,45 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Disconnect Clearance',
-      'Sign out of current account? Local database will remain safely preserved.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            playSound('buttonTap');
-            await logout();
-            router.replace('/auth');
-          },
-        },
-      ]
-    );
+    confirmAction({
+      title: 'Disconnect Clearance',
+      message: 'Sign out of current account? Local database will remain safely preserved.',
+      confirmText: 'Sign Out',
+      destructive: true,
+      onConfirm: async () => {
+        playSound('buttonTap');
+        await logout();
+        router.replace('/auth');
+      },
+    });
   };
 
   const handleClearAllData = () => {
-    Alert.alert(
-      'Reset to Clean Slate',
-      'Purge all tasks and routines? Your database will be completely fresh and your profile reset to blank.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Purge & Reset',
-          style: 'destructive',
-          onPress: async () => {
-            await clearAllData();
-            await resetProfile();
-            Alert.alert('Clean Slate Initialized', 'All missions cleared and profile reset to blank.');
-          },
-        },
-      ]
-    );
+    confirmAction({
+      title: 'Reset to Clean Slate',
+      message:
+        'Purge all tasks and routines? Your database will be completely fresh and your profile reset to blank.',
+      confirmText: 'Purge & Reset',
+      destructive: true,
+      onConfirm: async () => {
+        await clearAllData();
+        await resetProfile();
+        showAlert('Clean Slate Initialized', 'All missions cleared and profile reset to blank.');
+      },
+    });
   };
 
   const handleLoadStarterPack = () => {
-    Alert.alert(
-      'Load Hero Starter Pack',
-      'Populate your schedule with recommended superhero daily protocols (Morning Patrol, Focus Operations, Evening Recon)?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Load Protocols',
-          onPress: async () => {
-            await loadStarterProtocols();
-            Alert.alert('Loaded', 'Hero Starter Pack added to your routines.');
-          },
-        },
-      ]
-    );
+    confirmAction({
+      title: 'Load Hero Starter Pack',
+      message:
+        'Populate your schedule with recommended superhero daily protocols (Morning Patrol, Focus Operations, Evening Recon)?',
+      confirmText: 'Load Protocols',
+      onConfirm: async () => {
+        await loadStarterProtocols();
+        showAlert('Loaded', 'Hero Starter Pack added to your routines.');
+      },
+    });
   };
 
   const handlePreviewSound = (sfx: SoundEffectType) => {
@@ -152,412 +147,621 @@ export default function SettingsScreen() {
 
   const soundPreviews: { type: SoundEffectType; label: string; hero: string; color: string }[] = [
     { type: 'webShoot', label: 'Web-Shoot Snap', hero: 'Spider-Man', color: colors.primary },
-    { type: 'electricCrackle', label: 'Electric Crackle', hero: 'Thor', color: colors.secondary },
+    { type: 'electricCrackle', label: 'EDM Electro Surge', hero: 'Thor', color: colors.secondary },
     { type: 'thunderMilestone', label: 'Thunder Victory', hero: 'Thor', color: colors.accent },
     { type: 'symbioteWhoosh', label: 'Symbiote Whoosh', hero: 'Venom', color: colors.purple },
     { type: 'taskSuccess', label: 'Mission Success', hero: 'Tactical', color: colors.success },
-    { type: 'buttonTap', label: 'Precision Click', hero: 'HUD Feedback', color: colors.textMuted },
+    { type: 'buttonTap', label: 'EDM Synth Pluck', hero: 'HUD Feedback', color: colors.textMuted },
   ];
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <WebBackground />
+      <WebBackground variant="minimal" showLightning={false} />
 
-      {/* Header */}
-      <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
-        <Text style={[styles.headerSubtitle, { color: colors.primary }]}>CONFIGURATION</Text>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>Settings & Audio</Text>
-      </View>
-
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Account Profile Card with Comic Portrait */}
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
-          <View style={styles.accountRow}>
-            <View style={[styles.avatarCircle, { borderColor: colors.primary }]}>
-              <Image
-                source={require('@/assets/images/hero-portrait.jpg')}
-                style={styles.avatarImg}
-                contentFit="cover"
-              />
-            </View>
-
-            <View style={styles.accountInfo}>
-              <Text style={[styles.accountName, { color: colors.text }]}>
-                {user?.name ? user.name : 'UNREGISTERED OPERATIVE'}
-              </Text>
-              <Text style={[styles.accountEmail, { color: colors.textMuted }]}>
-                {user?.callsign
-                  ? `Codename: ${user.callsign} • Target: ${user.dailyTarget || 5}/day`
-                  : 'Tap below to configure Hero Dossier'}
-              </Text>
-              <View style={styles.badgeRow}>
-                <View style={[styles.clearanceBadge, { backgroundColor: colors.secondarySubtle }]}>
-                  <Text style={[styles.clearanceText, { color: colors.secondary }]}>
-                    {user?.isGuest ? 'OFFLINE GUEST' : 'AUTHENTICATED'}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.editBadge, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
-                  onPress={() => {
-                    playSound('buttonTap');
-                    triggerHaptic('light');
-                    router.push('/profile');
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="create-outline" size={12} color={colors.primary} />
-                  <Text style={[styles.editBadgeText, { color: colors.primary }]}>
-                    {user?.name ? 'EDIT PROFILE' : 'SET UP'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.logoutBtn}
-              onPress={handleLogout}
-              activeOpacity={0.7}
-              accessibilityLabel="Sign out"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="log-out-outline" size={20} color={colors.primary} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Operative Clearance & Streak Telemetry */}
-          <View style={[styles.operativeStatsRow, { borderTopColor: colors.borderSubtle }]}>
-            <View style={styles.operativeStatCol}>
-              <Text style={[styles.operativeStatLabel, { color: colors.textMuted }]}>OPERATIVE RANK</Text>
-              <Text style={[styles.operativeRankTitle, { color: colors.text }]}>
-                {userStats?.rankTitle || 'RECRUIT OPERATIVE'}
-              </Text>
-              <Text style={[styles.operativeRankLevel, { color: colors.textSecondary }]}>
-                Clearance Level {userStats?.rankLevel || 1}
-              </Text>
-            </View>
-
-            <View style={[styles.operativeStatDivider, { backgroundColor: colors.borderSubtle }]} />
-
-            <View style={styles.operativeStatCol}>
-              <Text style={[styles.operativeStatLabel, { color: colors.textMuted }]}>ACTIVE STREAK</Text>
-              <Text style={[styles.operativeStreakVal, { color: colors.primary }]}>
-                🔥 {userStats?.streakDays || 1} {userStats?.streakDays === 1 ? 'DAY' : 'DAYS'}
-              </Text>
-              <Text style={[styles.operativeTotalMissions, { color: colors.textSecondary }]}>
-                {userStats?.totalCompletedAll || 0} Objectives Cleared
-              </Text>
-            </View>
-          </View>
-
-          {/* Rank Progress Bar */}
-          <View style={styles.rankProgressSection}>
-            <View style={styles.rankProgressHeader}>
-              <Text style={[styles.rankProgressSub, { color: colors.textSecondary }]}>
-                Next Tier: {userStats?.nextRankTitle || 'STREET VIGILANTE'}
-              </Text>
-              <Text style={[styles.rankProgressPct, { color: colors.secondary }]}>
-                {Math.round((userStats?.rankProgress || 0) * 100)}%
-              </Text>
-            </View>
-            <View style={[styles.rankTrack, { backgroundColor: colors.inputBackground }]}>
-              <View
-                style={[
-                  styles.rankFill,
-                  {
-                    backgroundColor: colors.primary,
-                    width: `${Math.round((userStats?.rankProgress || 0) * 100)}%`,
-                  },
-                ]}
-              />
-            </View>
-          </View>
+      <View style={styles.mainContainer}>
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
+          <Text style={[styles.headerSubtitle, { color: colors.primary }]}>CONFIGURATION</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Profile & Settings</Text>
         </View>
 
-        {/* Section: Visual Theme Mode */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>VISUAL THEME</Text>
-
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 32 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Account Profile Card with Comic Portrait */}
           <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
-            <View style={styles.themeSelectorRow}>
-              {(['dark', 'light', 'system'] as const).map((t) => {
-                const isSelected = themeMode === t;
-                return (
-                  <TouchableOpacity
-                    key={t}
-                    style={[
-                      styles.themeOptionBtn,
-                      {
-                        backgroundColor: isSelected ? colors.primarySubtle : colors.inputBackground,
-                        borderColor: isSelected ? colors.primary : colors.borderSubtle,
-                      },
-                    ]}
-                    onPress={() => handleThemeSelect(t)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons
-                      name={
-                        t === 'dark'
-                          ? 'moon-outline'
-                          : t === 'light'
-                            ? 'sunny-outline'
-                            : 'phone-portrait-outline'
-                      }
-                      size={18}
-                      color={isSelected ? colors.primary : colors.textMuted}
-                    />
-                    <Text
-                      style={[
-                        styles.themeOptionText,
-                        {
-                          color: isSelected ? colors.primary : colors.textMuted,
-                          fontWeight: isSelected ? '800' : '500',
-                        },
-                      ]}
-                    >
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
+            <View style={styles.accountRow}>
+              <SpidyAvatar
+                size={54}
+                name={user?.name || 'Operative'}
+                archetype={user?.heroArchetype || 'spiderman'}
+              />
+
+              <View style={styles.accountInfo}>
+                <Text style={[styles.accountName, { color: colors.text }]}>
+                  {user?.name ? user.name : 'UNREGISTERED OPERATIVE'}
+                </Text>
+                <Text style={[styles.accountEmail, { color: colors.textMuted }]}>
+                  {user?.callsign
+                    ? `Codename: ${user.callsign} • Target: ${user.dailyTarget || 5}/day`
+                    : 'Tap below to configure Hero Dossier'}
+                </Text>
+                <View style={styles.badgeRow}>
+                  <View style={[styles.clearanceBadge, { backgroundColor: colors.secondarySubtle }]}>
+                    <Text style={[styles.clearanceText, { color: colors.secondary }]}>
+                      {user?.isGuest ? 'OFFLINE GUEST' : 'AUTHENTICATED'}
                     </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </View>
-
-        {/* Section: Cinematic Sound & Haptics */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>CINEMATIC SOUND & HAPTICS</Text>
-
-          <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
-            {/* UI Sound Effects Toggle */}
-            <View style={styles.settingRow}>
-              <View style={styles.settingIconTitle}>
-                <Ionicons name="volume-high-outline" size={19} color={colors.primary} />
-                <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingTitle, { color: colors.text }]}>UI Sound Effects</Text>
-                  <Text style={[styles.settingSub, { color: colors.textMuted }]}>
-                    Spider-Man web, Thor lightning & ambient audio cues
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={soundEnabled}
-                onValueChange={(val) => {
-                  playSound('buttonTap');
-                  toggleSound(val);
-                }}
-                trackColor={{ false: colors.borderMuted, true: colors.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Master Volume Stepper */}
-            <View style={[styles.settingRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-              <View style={styles.settingIconTitle}>
-                <Ionicons name="speedometer-outline" size={19} color={colors.secondary} />
-                <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingTitle, { color: colors.text }]}>Master Volume</Text>
-                  <Text style={[styles.settingSub, { color: colors.textMuted }]}>
-                    {Math.round(masterVolume * 100)}% output volume
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.volumeControls}>
-                <TouchableOpacity
-                  style={[styles.volStepBtn, { backgroundColor: colors.inputBackground, borderColor: colors.borderSubtle }]}
-                  onPress={() => updateVolume(Math.max(0.2, masterVolume - 0.2))}
-                  accessibilityLabel="Decrease volume"
-                >
-                  <Ionicons name="remove" size={15} color={colors.text} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.volStepBtn, { backgroundColor: colors.inputBackground, borderColor: colors.borderSubtle }]}
-                  onPress={() => updateVolume(Math.min(1.0, masterVolume + 0.2))}
-                  accessibilityLabel="Increase volume"
-                >
-                  <Ionicons name="add" size={15} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Haptic Feedback Toggle */}
-            <View style={[styles.settingRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-              <View style={styles.settingIconTitle}>
-                <Ionicons name="phone-portrait-outline" size={19} color={colors.accent} />
-                <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingTitle, { color: colors.text }]}>Haptic Feedback</Text>
-                  <Text style={[styles.settingSub, { color: colors.textMuted }]}>
-                    Tactile vibration pulses on check and tap
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={hapticsEnabled}
-                onValueChange={(val) => {
-                  triggerHaptic('medium');
-                  toggleHaptics(val);
-                }}
-                trackColor={{ false: colors.borderMuted, true: colors.accent }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Audio Previews Grid */}
-            <View style={[styles.soundPreviewBox, { borderTopColor: colors.borderSubtle }]}>
-              <Text style={[styles.previewHeading, { color: colors.textSecondary }]}>AUDIO ASSET PREVIEW</Text>
-              <View style={styles.previewsGrid}>
-                {soundPreviews.map((s) => (
+                  </View>
                   <TouchableOpacity
-                    key={s.type}
-                    style={[styles.previewBtn, { backgroundColor: colors.inputBackground, borderColor: colors.borderSubtle }]}
-                    onPress={() => handlePreviewSound(s.type)}
+                    style={[styles.editBadge, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
+                    onPress={() => {
+                      playSound('buttonTap');
+                      triggerHaptic('light');
+                      router.push('/profile');
+                    }}
                     activeOpacity={0.7}
                   >
-                    <View style={[styles.previewDot, { backgroundColor: s.color }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.previewLabel, { color: colors.text }]}>{s.label}</Text>
-                      <Text style={[styles.previewHero, { color: s.color }]}>{s.hero}</Text>
-                    </View>
-                    <Ionicons name="play" size={13} color={colors.text} />
+                    <Ionicons name="create-outline" size={12} color={colors.primary} />
+                    <Text style={[styles.editBadgeText, { color: colors.primary }]}>
+                      {user?.name ? 'EDIT PROFILE' : 'SET UP'}
+                    </Text>
                   </TouchableOpacity>
-                ))}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.logoutBtn}
+                onPress={handleLogout}
+                activeOpacity={0.7}
+                accessibilityLabel="Sign out"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="log-out-outline" size={20} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Operative Clearance & Streak Telemetry */}
+            <View style={[styles.operativeStatsRow, { borderTopColor: colors.borderSubtle }]}>
+              <View style={styles.operativeStatCol}>
+                <Text style={[styles.operativeStatLabel, { color: colors.textMuted }]}>OPERATIVE RANK</Text>
+                <Text style={[styles.operativeRankTitle, { color: colors.text }]}>
+                  {userStats?.rankTitle || 'RECRUIT OPERATIVE'}
+                </Text>
+                <Text style={[styles.operativeRankLevel, { color: colors.textSecondary }]}>
+                  Clearance Level {userStats?.rankLevel || 1}
+                </Text>
+              </View>
+
+              <View style={[styles.operativeStatDivider, { backgroundColor: colors.borderSubtle }]} />
+
+              <View style={styles.operativeStatCol}>
+                <Text style={[styles.operativeStatLabel, { color: colors.textMuted }]}>ACTIVE STREAK</Text>
+                <Text style={[styles.operativeStreakVal, { color: colors.primary }]}>
+                  🔥 {userStats?.streakDays || 1} {userStats?.streakDays === 1 ? 'DAY' : 'DAYS'}
+                </Text>
+                <Text style={[styles.operativeTotalMissions, { color: colors.textSecondary }]}>
+                  {userStats?.totalCompletedAll || 0} Objectives Cleared
+                </Text>
+              </View>
+            </View>
+
+            {/* Rank Progress Bar */}
+            <View style={styles.rankProgressSection}>
+              <View style={styles.rankProgressHeader}>
+                <Text style={[styles.rankProgressSub, { color: colors.textSecondary }]}>
+                  Next Tier: {userStats?.nextRankTitle || 'STREET VIGILANTE'}
+                </Text>
+                <Text style={[styles.rankProgressPct, { color: colors.secondary }]}>
+                  {Math.round((userStats?.rankProgress || 0) * 100)}%
+                </Text>
+              </View>
+              <View style={[styles.rankTrack, { backgroundColor: colors.inputBackground }]}>
+                <View
+                  style={[
+                    styles.rankFill,
+                    {
+                      backgroundColor: colors.primary,
+                      width: `${Math.round((userStats?.rankProgress || 0) * 100)}%`,
+                    },
+                  ]}
+                />
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Section: Cinematic Intro Experience */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>CINEMATIC INTRO EXPERIENCE</Text>
-
+          {/* Quick Links: Achievements & Analytics */}
           <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
-            {/* Cinematic Startup Intro Toggle */}
-            <View style={styles.settingRow}>
-              <View style={styles.settingIconTitle}>
-                <Ionicons name="film-outline" size={19} color={colors.primary} />
-                <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingTitle, { color: colors.text }]}>Cinematic Startup Intro</Text>
-                  <Text style={[styles.settingSub, { color: colors.textMuted }]}>
-                    Personalized superhero animation on app launch
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={introEnabled}
-                onValueChange={handleToggleIntroEnabled}
-                trackColor={{ false: colors.borderMuted, true: colors.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Intro Audio Effects Toggle */}
-            <View style={[styles.settingRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-              <View style={styles.settingIconTitle}>
-                <Ionicons name="volume-medium-outline" size={19} color={colors.secondary} />
-                <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingTitle, { color: colors.text }]}>Intro Audio Effects</Text>
-                  <Text style={[styles.settingSub, { color: colors.textMuted }]}>
-                    Whoosh, web snap, and thunder crackle
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={introSoundEnabled}
-                onValueChange={handleToggleIntroSound}
-                trackColor={{ false: colors.borderMuted, true: colors.secondary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Reduced Motion Toggle */}
-            <View style={[styles.settingRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-              <View style={styles.settingIconTitle}>
-                <Ionicons name="speedometer-outline" size={19} color={colors.accent} />
-                <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingTitle, { color: colors.text }]}>Fast Mode / Reduced Motion</Text>
-                  <Text style={[styles.settingSub, { color: colors.textMuted }]}>
-                    Shorten startup sequence for instant access
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={reducedMotion}
-                onValueChange={handleToggleReducedMotion}
-                trackColor={{ false: colors.borderMuted, true: colors.accent }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Replay Intro CTA */}
-            <WebButtonInteraction
-              style={[styles.replayBtn, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
-              onPress={handleReplayIntro}
-              variant="subtle"
-              sound="buttonTap"
-              haptic="medium"
+            <TouchableOpacity
+              style={styles.navMenuRow}
+              onPress={() => {
+                playSound('buttonTap');
+                router.push('/achievements');
+              }}
+              activeOpacity={0.75}
             >
-              <Ionicons name="play-circle" size={18} color={colors.primary} />
-              <Text style={[styles.replayBtnText, { color: colors.primary }]}>Replay Cinematic Intro</Text>
-            </WebButtonInteraction>
-          </View>
-        </View>
+              <View style={styles.navMenuLeft}>
+                <Ionicons name="trophy-outline" size={20} color="#F59E0B" />
+                <Text style={[styles.navMenuLabel, { color: colors.text }]}>Achievements & Milestones</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
 
-        {/* Section: Database & Storage */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>LOCAL SQLITE STORAGE</Text>
-
-          <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
-            <View style={styles.statRow}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Active Missions in SQLite:</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{allTasks.length} tasks</Text>
-            </View>
-
-            <View style={[styles.statRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Configured Routine Protocols:</Text>
-              <Text style={[styles.statValue, { color: colors.text }]}>{routines.length} protocols</Text>
-            </View>
-
-            <View style={styles.dataActionsCol}>
-              <WebButtonInteraction
-                style={[styles.resetBtn, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
-                onPress={handleClearAllData}
-                variant="subtle"
-                sound="deleteAction"
-                haptic="medium"
+            <View style={[styles.borderTop, { borderTopColor: colors.borderSubtle, paddingTop: 12, marginTop: 12 }]}>
+              <TouchableOpacity
+                style={styles.navMenuRow}
+                onPress={() => {
+                  playSound('buttonTap');
+                  router.push('/analytics');
+                }}
+                activeOpacity={0.75}
               >
-                <Ionicons name="trash-outline" size={15} color={colors.primary} />
-                <Text style={[styles.resetBtnText, { color: colors.primary }]}>Purge to Clean Slate (Blank Database)</Text>
-              </WebButtonInteraction>
-
-              <WebButtonInteraction
-                style={[styles.resetBtn, { backgroundColor: colors.secondarySubtle, borderColor: colors.secondaryBorder, marginTop: 8 }]}
-                onPress={handleLoadStarterPack}
-                variant="subtle"
-                sound="thunderMilestone"
-                haptic="medium"
-              >
-                <Ionicons name="download-outline" size={15} color={colors.secondary} />
-                <Text style={[styles.resetBtnText, { color: colors.secondary }]}>Load Superhero Starter Protocols</Text>
-              </WebButtonInteraction>
+                <View style={styles.navMenuLeft}>
+                  <Ionicons name="bar-chart-outline" size={20} color={colors.secondary} />
+                  <Text style={[styles.navMenuLabel, { color: colors.text }]}>Productivity Analytics</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
             </View>
           </View>
-        </View>
 
-        {/* About App */}
-        <View style={styles.aboutBox}>
-          <SpiderEmblem size={34} color={colors.textMuted} opacity={0.6} />
-          <Text style={[styles.aboutTitle, { color: colors.text }]}>SPIDEY FLOW</Text>
-          <Text style={[styles.aboutTagline, { color: colors.primary }]}>YOUR DAY. YOUR MISSION.</Text>
-          <Text style={[styles.aboutVersion, { color: colors.textMuted }]}>Version 1.0.0 • Production Build</Text>
-          <Text style={[styles.aboutCredits, { color: colors.textSecondary }]}>
-            Crafted with precision. Spider-Man agility, Thor lightning, and Venom atmosphere.
-          </Text>
-        </View>
-      </ScrollView>
+          {/* Section: Tri-Hero Symbiote Fusion Matrix */}
+          <View style={styles.section}>
+            <View style={styles.fusionHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>TRI-HERO SYMBIOTE FUSION • HERO THEME & PALETTE</Text>
+              <View style={[styles.allPowersActiveBadge, { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.4)' }]}>
+                <View style={[styles.pulsingDot, { backgroundColor: '#EF4444' }]} />
+                <Text style={styles.allPowersActiveText}>ALL 3 HEROES ACTIVE</Text>
+              </View>
+            </View>
+
+            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
+              <Text style={[styles.fusionDescription, { color: colors.textSecondary }]}>
+                Spider-Man’s geometric web, Thor’s Mjolnir thunder hammer, and Venom’s freaky symbiote webbing are fused into your supreme operating system.
+              </Text>
+
+              {/* Three Unified Superhero Power Matrices */}
+              <View style={styles.heroThemeContainer}>
+                {/* 1. Spider-Man: Precision Web */}
+                <TouchableOpacity
+                  style={[
+                    styles.heroThemeCard,
+                    {
+                      backgroundColor: colors.surfaceElevated,
+                      borderColor: 'rgba(239, 68, 68, 0.65)',
+                    },
+                  ]}
+                  onPress={() => {
+                    playSound('webShoot');
+                    triggerHaptic('medium');
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <View
+                    style={[
+                      styles.heroThemeIconBox,
+                      {
+                        backgroundColor: 'rgba(239, 68, 68, 0.20)',
+                        borderColor: '#EF4444',
+                      },
+                    ]}
+                  >
+                    <Ionicons name="radio-outline" size={20} color="#EF4444" />
+                  </View>
+
+                  <View style={styles.heroThemeContent}>
+                    <View style={styles.heroThemeHeaderRow}>
+                      <Text style={[styles.heroThemeName, { color: '#EF4444' }]}>
+                        Spider-Man
+                      </Text>
+                      <View style={[styles.heroThemeBadge, { backgroundColor: 'rgba(239, 68, 68, 0.20)' }]}>
+                        <Text style={[styles.heroThemeBadgeText, { color: '#EF4444' }]}>
+                          ACTIVE WEB
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.heroThemeTagline, { color: colors.textMuted }]}>
+                      Real &apos;THWIP!&apos; Web-Shooter • Crimson Grid
+                    </Text>
+                  </View>
+
+                  <View style={styles.testPowerPill}>
+                    <Text style={styles.testPowerPillText}>THWIP</Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* 2. Thor: Mjolnir Hammer & Thunder */}
+                <TouchableOpacity
+                  style={[
+                    styles.heroThemeCard,
+                    {
+                      backgroundColor: colors.surfaceElevated,
+                      borderColor: 'rgba(14, 165, 233, 0.65)',
+                    },
+                  ]}
+                  onPress={() => {
+                    playSound('thunderMilestone');
+                    triggerHaptic('heavy');
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <View
+                    style={[
+                      styles.heroThemeIconBox,
+                      {
+                        backgroundColor: 'rgba(14, 165, 233, 0.20)',
+                        borderColor: '#0EA5E9',
+                      },
+                    ]}
+                  >
+                    <Ionicons name="flash-outline" size={20} color="#0EA5E9" />
+                  </View>
+
+                  <View style={styles.heroThemeContent}>
+                    <View style={styles.heroThemeHeaderRow}>
+                      <Text style={[styles.heroThemeName, { color: '#0EA5E9' }]}>
+                        Thor Mjolnir
+                      </Text>
+                      <View style={[styles.heroThemeBadge, { backgroundColor: 'rgba(14, 165, 233, 0.20)' }]}>
+                        <Text style={[styles.heroThemeBadgeText, { color: '#0EA5E9' }]}>
+                          LIGHTNING
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.heroThemeTagline, { color: colors.textMuted }]}>
+                      Electric Hammer Runes • Divine Thunder
+                    </Text>
+                  </View>
+
+                  <View style={[styles.testPowerPill, { borderColor: 'rgba(14, 165, 233, 0.4)' }]}>
+                    <Text style={[styles.testPowerPillText, { color: '#38BDF8' }]}>STRIKE</Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* 3. Venom: Freaky Symbiote Web */}
+                <TouchableOpacity
+                  style={[
+                    styles.heroThemeCard,
+                    {
+                      backgroundColor: colors.surfaceElevated,
+                      borderColor: 'rgba(168, 85, 247, 0.65)',
+                    },
+                  ]}
+                  onPress={() => {
+                    playSound('symbioteWhoosh');
+                    triggerHaptic('medium');
+                  }}
+                  activeOpacity={0.75}
+                >
+                  <View
+                    style={[
+                      styles.heroThemeIconBox,
+                      {
+                        backgroundColor: 'rgba(168, 85, 247, 0.20)',
+                        borderColor: '#A855F7',
+                      },
+                    ]}
+                  >
+                    <Ionicons name="water-outline" size={20} color="#A855F7" />
+                  </View>
+
+                  <View style={styles.heroThemeContent}>
+                    <View style={styles.heroThemeHeaderRow}>
+                      <Text style={[styles.heroThemeName, { color: '#A855F7' }]}>
+                        Venom Symbiote
+                      </Text>
+                      <View style={[styles.heroThemeBadge, { backgroundColor: 'rgba(168, 85, 247, 0.20)' }]}>
+                        <Text style={[styles.heroThemeBadgeText, { color: '#A855F7' }]}>
+                          FREAKY WEB
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.heroThemeTagline, { color: colors.textMuted }]}>
+                      Alien Living Tendrils • Droplet Nodes
+                    </Text>
+                  </View>
+
+                  <View style={[styles.testPowerPill, { borderColor: 'rgba(168, 85, 247, 0.4)' }]}>
+                    <Text style={[styles.testPowerPillText, { color: '#C084FC' }]}>SURGE</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Standard Themes Row: Light Mode & System Default */}
+              <View style={[styles.standardThemeRow, { borderTopColor: colors.borderSubtle }]}>
+                {[
+                  { id: 'light' as const, name: 'Light Mode', icon: 'sunny-outline' as const },
+                  { id: 'system' as const, name: 'System Default', icon: 'phone-portrait-outline' as const },
+                ].map((std) => {
+                  const isSelected = themeMode === std.id;
+                  return (
+                    <TouchableOpacity
+                      key={std.id}
+                      style={[
+                        styles.standardThemeBtn,
+                        {
+                          backgroundColor: isSelected ? colors.primarySubtle : colors.inputBackground,
+                          borderColor: isSelected ? colors.primary : colors.borderSubtle,
+                        },
+                      ]}
+                      onPress={() => handleThemeSelect(std.id)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name={std.icon}
+                        size={16}
+                        color={isSelected ? colors.primary : colors.textMuted}
+                      />
+                      <Text
+                        style={[
+                          styles.standardThemeText,
+                          {
+                            color: isSelected ? colors.primary : colors.textMuted,
+                            fontWeight: isSelected ? '700' : '500',
+                          },
+                        ]}
+                      >
+                        {std.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+
+          {/* Section: Cinematic Sound & Haptics */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>CINEMATIC SOUND & HAPTICS</Text>
+
+            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
+              {/* UI Sound Effects Toggle */}
+              <View style={styles.settingRow}>
+                <View style={styles.settingIconTitle}>
+                  <Ionicons name="volume-high-outline" size={19} color={colors.primary} />
+                  <View style={styles.settingTextCol}>
+                    <Text style={[styles.settingTitle, { color: colors.text }]}>UI Sound Effects</Text>
+                    <Text style={[styles.settingSub, { color: colors.textMuted }]}>
+                      Spider-Man web, Thor lightning & ambient audio cues
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={soundEnabled}
+                  onValueChange={(val) => {
+                    playSound('buttonTap');
+                    toggleSound(val);
+                  }}
+                  trackColor={{ false: colors.borderMuted, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Master Volume Stepper */}
+              <View style={[styles.settingRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
+                <View style={styles.settingIconTitle}>
+                  <Ionicons name="speedometer-outline" size={19} color={colors.secondary} />
+                  <View style={styles.settingTextCol}>
+                    <Text style={[styles.settingTitle, { color: colors.text }]}>Master Volume</Text>
+                    <Text style={[styles.settingSub, { color: colors.textMuted }]}>
+                      {Math.round(masterVolume * 100)}% output volume
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.volumeControls}>
+                  <TouchableOpacity
+                    style={[styles.volStepBtn, { backgroundColor: colors.inputBackground, borderColor: colors.borderSubtle }]}
+                    onPress={() => updateVolume(Math.max(0.2, masterVolume - 0.2))}
+                    accessibilityLabel="Decrease volume"
+                  >
+                    <Ionicons name="remove" size={15} color={colors.text} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.volStepBtn, { backgroundColor: colors.inputBackground, borderColor: colors.borderSubtle }]}
+                    onPress={() => updateVolume(Math.min(1.0, masterVolume + 0.2))}
+                    accessibilityLabel="Increase volume"
+                  >
+                    <Ionicons name="add" size={15} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Haptic Feedback Toggle */}
+              <View style={[styles.settingRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
+                <View style={styles.settingIconTitle}>
+                  <Ionicons name="phone-portrait-outline" size={19} color={colors.accent} />
+                  <View style={styles.settingTextCol}>
+                    <Text style={[styles.settingTitle, { color: colors.text }]}>Haptic Feedback</Text>
+                    <Text style={[styles.settingSub, { color: colors.textMuted }]}>
+                      Tactile vibration pulses on check and tap
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={hapticsEnabled}
+                  onValueChange={(val) => {
+                    triggerHaptic('medium');
+                    toggleHaptics(val);
+                  }}
+                  trackColor={{ false: colors.borderMuted, true: colors.accent }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Audio Previews Grid */}
+              <View style={[styles.soundPreviewBox, { borderTopColor: colors.borderSubtle }]}>
+                <Text style={[styles.previewHeading, { color: colors.textSecondary }]}>AUDIO ASSET PREVIEW</Text>
+                <View style={styles.previewsGrid}>
+                  {soundPreviews.map((s) => (
+                    <TouchableOpacity
+                      key={s.type}
+                      style={[styles.previewBtn, { backgroundColor: colors.inputBackground, borderColor: colors.borderSubtle }]}
+                      onPress={() => handlePreviewSound(s.type)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.previewDot, { backgroundColor: s.color }]} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.previewLabel, { color: colors.text }]}>{s.label}</Text>
+                        <Text style={[styles.previewHero, { color: s.color }]}>{s.hero}</Text>
+                      </View>
+                      <Ionicons name="play" size={13} color={colors.text} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Section: Cinematic Intro Experience */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>CINEMATIC INTRO EXPERIENCE</Text>
+
+            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
+              {/* Cinematic Startup Intro Toggle */}
+              <View style={styles.settingRow}>
+                <View style={styles.settingIconTitle}>
+                  <Ionicons name="film-outline" size={19} color={colors.primary} />
+                  <View style={styles.settingTextCol}>
+                    <Text style={[styles.settingTitle, { color: colors.text }]}>Cinematic Startup Intro</Text>
+                    <Text style={[styles.settingSub, { color: colors.textMuted }]}>
+                      Personalized superhero animation on app launch
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={introEnabled}
+                  onValueChange={handleToggleIntroEnabled}
+                  trackColor={{ false: colors.borderMuted, true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Intro Audio Effects Toggle */}
+              <View style={[styles.settingRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
+                <View style={styles.settingIconTitle}>
+                  <Ionicons name="volume-medium-outline" size={19} color={colors.secondary} />
+                  <View style={styles.settingTextCol}>
+                    <Text style={[styles.settingTitle, { color: colors.text }]}>Intro Audio Effects</Text>
+                    <Text style={[styles.settingSub, { color: colors.textMuted }]}>
+                      Whoosh, web snap, and thunder crackle
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={introSoundEnabled}
+                  onValueChange={handleToggleIntroSound}
+                  trackColor={{ false: colors.borderMuted, true: colors.secondary }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Reduced Motion Toggle */}
+              <View style={[styles.settingRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
+                <View style={styles.settingIconTitle}>
+                  <Ionicons name="speedometer-outline" size={19} color={colors.accent} />
+                  <View style={styles.settingTextCol}>
+                    <Text style={[styles.settingTitle, { color: colors.text }]}>Fast Mode / Reduced Motion</Text>
+                    <Text style={[styles.settingSub, { color: colors.textMuted }]}>
+                      Shorten startup sequence for instant access
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={reducedMotion}
+                  onValueChange={handleToggleReducedMotion}
+                  trackColor={{ false: colors.borderMuted, true: colors.accent }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+
+              {/* Replay Intro CTA */}
+              <WebButtonInteraction
+                style={[styles.replayBtn, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
+                onPress={handleReplayIntro}
+                variant="subtle"
+                sound="buttonTap"
+                haptic="medium"
+              >
+                <Ionicons name="play-circle" size={18} color={colors.primary} />
+                <Text style={[styles.replayBtnText, { color: colors.primary }]}>Replay Cinematic Intro</Text>
+              </WebButtonInteraction>
+            </View>
+          </View>
+
+          {/* Section: Database & Storage */}
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>LOCAL SQLITE STORAGE</Text>
+
+            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
+              <View style={styles.statRow}>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Active Missions in SQLite:</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{allTasks.length} tasks</Text>
+              </View>
+
+              <View style={[styles.statRow, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Configured Routine Protocols:</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{routines.length} protocols</Text>
+              </View>
+
+              <View style={styles.dataActionsCol}>
+                <WebButtonInteraction
+                  style={[styles.resetBtn, { backgroundColor: colors.primarySubtle, borderColor: colors.primaryBorder }]}
+                  onPress={handleClearAllData}
+                  variant="subtle"
+                  sound="deleteAction"
+                  haptic="medium"
+                >
+                  <Ionicons name="trash-outline" size={15} color={colors.primary} />
+                  <Text style={[styles.resetBtnText, { color: colors.primary }]}>Purge to Clean Slate (Blank Database)</Text>
+                </WebButtonInteraction>
+
+                <WebButtonInteraction
+                  style={[styles.resetBtn, { backgroundColor: colors.secondarySubtle, borderColor: colors.secondaryBorder, marginTop: 8 }]}
+                  onPress={handleLoadStarterPack}
+                  variant="subtle"
+                  sound="thunderMilestone"
+                  haptic="medium"
+                >
+                  <Ionicons name="download-outline" size={15} color={colors.secondary} />
+                  <Text style={[styles.resetBtnText, { color: colors.secondary }]}>Load Superhero Starter Protocols</Text>
+                </WebButtonInteraction>
+              </View>
+            </View>
+          </View>
+
+          {/* About App */}
+          <View style={styles.aboutBox}>
+            <SpiderEmblem size={34} color={colors.textMuted} opacity={0.6} />
+            <Text style={[styles.aboutTitle, { color: colors.text }]}>SPIDEY FLOW</Text>
+            <Text style={[styles.aboutTagline, { color: colors.primary }]}>YOUR DAY. YOUR MISSION.</Text>
+            <Text style={[styles.aboutVersion, { color: colors.textMuted }]}>Version 1.0.0 • Production Build</Text>
+            <Text style={[styles.aboutCredits, { color: colors.textSecondary }]}>
+              Crafted with precision. Spider-Man agility, Thor lightning, and Venom atmosphere.
+            </Text>
+          </View>
+
+          {/* Bottom Full-Width Log Out Action */}
+          <TouchableOpacity
+            style={[
+              styles.logoutOutlineBtn,
+              {
+                borderColor: colors.primaryBorder,
+                backgroundColor: colors.primarySubtle,
+              },
+            ]}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="log-out-outline" size={18} color={colors.primary} />
+            <Text style={[styles.logoutOutlineText, { color: colors.primary }]}>Log Out</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
 
       {/* Hero Dossier Edit Modal */}
       <ModalHeroProfile
@@ -572,8 +776,14 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  mainContainer: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
+  },
   header: {
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.md,
     paddingTop: Platform.OS === 'android' ? 14 : Spacing.md,
     paddingBottom: Spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -592,9 +802,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
-    paddingBottom: 40,
+    paddingBottom: 32,
+  },
+  navMenuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 36,
+  },
+  navMenuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  navMenuLabel: {
+    fontSize: 14.5,
+    fontWeight: '600',
+  },
+  logoutOutlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  logoutOutlineText: {
+    fontSize: 14.5,
+    fontWeight: '700',
   },
   card: {
     borderRadius: Radii.lg,
@@ -758,6 +999,79 @@ const styles = StyleSheet.create({
   themeOptionText: {
     fontSize: 12,
   },
+  heroThemeContainer: {
+    gap: 10,
+  },
+  heroThemeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: Radii.md,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  heroThemeIconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  heroThemeContent: {
+    flex: 1,
+  },
+  heroThemeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  heroThemeName: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  heroThemeBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  heroThemeBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  heroThemeTagline: {
+    fontSize: 11.5,
+  },
+  heroThemeActiveIndicator: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  standardThemeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+  },
+  standardThemeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    gap: 6,
+  },
+  standardThemeText: {
+    fontSize: 11.5,
+  },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -907,5 +1221,51 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingHorizontal: 32,
     lineHeight: 16,
+  },
+  fusionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  allPowersActiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: Radii.pill,
+    borderWidth: 1,
+  },
+  pulsingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  allPowersActiveText: {
+    color: '#EF4444',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  fusionDescription: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginBottom: Spacing.md,
+  },
+  testPowerPill: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: Radii.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  testPowerPillText: {
+    color: '#EF4444',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
 });

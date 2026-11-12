@@ -2,10 +2,10 @@ import { Radii, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useSound } from '@/context/SoundContext';
 import { useTheme } from '@/hooks/use-theme';
+import { showAlert } from '@/services/platformAlert';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -43,7 +43,7 @@ export const ModalHeroProfile: React.FC<ModalHeroProfileProps> = ({ visible, onC
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Agent Name Required', 'Please enter your name or secret identity.');
+      showAlert('Agent Name Required', 'Please enter your name or secret identity.');
       return;
     }
 
@@ -64,7 +64,7 @@ export const ModalHeroProfile: React.FC<ModalHeroProfileProps> = ({ visible, onC
       onClose();
     } catch (err) {
       console.error('Failed to update profile:', err);
-      Alert.alert('Error', 'Could not save profile details.');
+      showAlert('Error', 'Could not save profile details.');
     }
   };
 

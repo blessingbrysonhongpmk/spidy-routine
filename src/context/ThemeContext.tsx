@@ -1,39 +1,51 @@
-import { Colors, ThemeColors, ThemeType } from '@/constants/theme';
+import { Colors, HeroTheme, ThemeColors, ThemeType } from '@/constants/theme';
 import { getAppSetting, setAppSetting } from '@/services/database';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useColorScheme as useRNColorScheme } from 'react-native';
 
-export type ThemeMode = 'dark' | 'light' | 'system';
+export type ThemeMode = 'spiderman' | 'thor' | 'venom' | 'dark' | 'light' | 'system';
 
 interface ThemeContextType {
   theme: ThemeType;
   themeMode: ThemeMode;
+  heroTheme: HeroTheme;
   colors: ThemeColors;
   isDark: boolean;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
+  setHeroTheme: (hero: HeroTheme) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'dark',
-  themeMode: 'dark',
-  colors: Colors.dark,
+  theme: 'spiderman',
+  themeMode: 'spiderman',
+  heroTheme: 'spiderman',
+  colors: Colors.spiderman,
   isDark: true,
   setThemeMode: async () => { },
+  setHeroTheme: async () => { },
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useRNColorScheme();
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('dark');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('spiderman');
 
   useEffect(() => {
     async function loadThemePreference() {
       try {
-        const saved = await getAppSetting('theme_mode', 'dark');
-        if (saved === 'light' || saved === 'dark' || saved === 'system') {
+        const saved = await getAppSetting('theme_mode', 'spiderman');
+        const validModes: ThemeMode[] = [
+          'spiderman',
+          'thor',
+          'venom',
+          'dark',
+          'light',
+          'system',
+        ];
+        if (validModes.includes(saved as ThemeMode)) {
           setThemeModeState(saved as ThemeMode);
         }
       } catch {
-        // Fallback to dark
+        // Fallback to spiderman
       }
     }
     loadThemePreference();
@@ -43,29 +55,54 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeModeState(mode);
     try {
       await setAppSetting('theme_mode', mode);
+      if (mode === 'spiderman' || mode === 'thor' || mode === 'venom') {
+        await setAppSetting('hero_archetype', mode);
+      }
     } catch {
       // Safe fallback
     }
+  };
+
+  const setHeroTheme = async (hero: HeroTheme) => {
+    await setThemeMode(hero);
   };
 
   const resolvedTheme: ThemeType =
     themeMode === 'system'
       ? systemScheme === 'light'
         ? 'light'
-        : 'dark'
-      : themeMode;
+        : 'spiderman'
+      : themeMode === 'dark'
+        ? 'spiderman'
+        : themeMode;
 
-  const isDark = resolvedTheme === 'dark';
-  const colors = isDark ? Colors.dark : Colors.light;
+  const isDark = resolvedTheme !== 'light';
+  const heroTheme: HeroTheme =
+    resolvedTheme === 'thor'
+      ? 'thor'
+      : resolvedTheme === 'venom'
+        ? 'venom'
+        : 'spiderman';
+
+  const colors: ThemeColors =
+    resolvedTheme === 'thor'
+      ? Colors.thor
+      : resolvedTheme === 'venom'
+        ? Colors.venom
+        : resolvedTheme === 'light'
+          ? Colors.light
+          : Colors.spiderman;
 
   return (
     <ThemeContext.Provider
       value={{
         theme: resolvedTheme,
         themeMode,
+        heroTheme,
         colors,
         isDark,
         setThemeMode,
+        setHeroTheme,
       }}
     >
       {children}

@@ -2,12 +2,11 @@ import { Radii, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useSound } from '@/context/SoundContext';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { AnimatedProgress } from './AnimatedProgress';
+import { SpidyAvatar, SpidyLogo } from './SpidyLogo';
 import { WebButtonInteraction } from './WebButtonInteraction';
 
 interface HeaderBrandingProps {
@@ -23,17 +22,13 @@ interface HeaderBrandingProps {
 /**
  * HeaderBranding:
  * World-class SPIDEY FLOW header and dashboard command module.
- * Matches the refined UI design with:
- * - Hamburger menu (left), metallic SPIDEY FLOW branding (center), circular hero avatar (right)
- * - Greeting ("Hello, [Name]! 👋", "Let's make today count.", calendar date) with hero silhouette
- * - Dual-arc circular progress telemetry (75% / Today's Progress / ⚡)
- * - Motivational Trophy card ("Great Progress! Keep going, you're on fire! 🏆")
- * - Next Activity quick-card ("Next Activity: Complete 3 tasks >")
- * - Three-pill segmented switcher: [ 📅 Today ] [ 🔄 Routine ] [ ☑ Tasks ]
+ * Independent brand identity with vector SpidyLogo and SpidyAvatar (no personal photos).
+ * Compact greeting, live telemetry, and instant mission switcher.
  */
 export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
   dateHeader,
   percentage = 0,
+  streakDays = 1,
   nextActivityTitle = 'Complete 3 tasks',
   onNextActivityPress,
   onProgressPress,
@@ -85,46 +80,45 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* 1. Top Application Bar: ☰, SPIDEY FLOW, Hero Avatar */}
+      {/* 1. Top Bar: Menu Button, Original SpidyLogo Wordmark, Vector SpidyAvatar */}
       <View style={styles.topBar}>
         <TouchableOpacity
           style={styles.menuBtn}
           onPress={handleMenuPress}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityLabel="Open settings menu"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Open settings"
         >
-          <Ionicons name="menu" size={24} color="#FFFFFF" />
+          <Ionicons name="menu" size={22} color="#E2E8F0" />
         </TouchableOpacity>
 
-        <View style={styles.brandCenter}>
-          <View style={styles.brandRow}>
-            <Text style={styles.brandSpidey}>SPIDEY </Text>
-            <Text style={styles.brandFlow}>FLOW</Text>
-          </View>
-          <Text style={styles.brandTagline}>Your Day. Your Mission.</Text>
-        </View>
-
+        {/* Original Vector SpidyLogo */}
         <TouchableOpacity
-          style={[styles.avatarButton, { borderColor: '#E50914' }]}
+          onPress={() => router.push('/(tabs)')}
+          activeOpacity={0.8}
+        >
+          <SpidyLogo variant="full" size={26} />
+        </TouchableOpacity>
+
+        {/* Vector Operative Avatar Badge (No personal photo) */}
+        <TouchableOpacity
           onPress={handleProfilePress}
           activeOpacity={0.8}
-          accessibilityLabel="User profile"
+          accessibilityLabel="Open profile"
         >
-          <Image
-            source={require('@/assets/images/hero-portrait.jpg')}
-            style={styles.avatarImg}
-            contentFit="cover"
+          <SpidyAvatar
+            size={36}
+            name={displayName}
+            archetype={user?.heroArchetype || 'spiderman'}
           />
         </TouchableOpacity>
       </View>
 
-      {/* 2. Hero Greeting Row with Moonlit City Skyline Silhouette */}
-      <View style={styles.greetingContainer}>
-        {/* Left Column: Greeting, Subtitle, Date */}
+      {/* 2. Compact Command Greeting Row */}
+      <View style={styles.greetingCard}>
         <View style={styles.greetingLeft}>
           <TouchableOpacity onPress={handleProfilePress} activeOpacity={0.8}>
             <Text style={styles.greetingName}>
-              Hello, <Text style={{ color: '#FFFFFF' }}>{displayName}!</Text> 👋
+              Hello, <Text style={{ color: '#FFFFFF' }}>{displayName}</Text>
             </Text>
             <Text style={styles.subGreeting}>
               {user?.motto || "Let's make today count."}
@@ -138,49 +132,25 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
               <>
                 <Text style={styles.dotSeparator}>•</Text>
                 <Ionicons name="time-outline" size={13} color="#38BDF8" />
-                <Text style={[styles.dateText, { color: '#38BDF8', fontWeight: '700' }]}>
-                  {liveTime}
-                </Text>
+                <Text style={styles.timeText}>{liveTime}</Text>
               </>
             ) : null}
           </View>
         </View>
 
-        {/* Right Column: Hero Silhouette Silhouette Graphic with Red Moon & Lightning */}
-        <View style={styles.heroGraphicWrapper} pointerEvents="none">
-          <Svg width={110} height={90} viewBox="0 0 110 90" fill="none">
-            <Defs>
-              <LinearGradient id="moonGlow" x1="0" y1="0" x2="1" y2="1">
-                <Stop offset="0%" stopColor="#EF4444" stopOpacity="0.8" />
-                <Stop offset="100%" stopColor="#991B1B" stopOpacity="0.2" />
-              </LinearGradient>
-            </Defs>
-            {/* Red Moon */}
-            <Circle cx={85} cy={35} r={22} fill="url(#moonGlow)" />
-            {/* City Skyline Silhouette */}
-            <Path
-              d="M0 90 L20 70 L30 70 L30 60 L45 60 L45 75 L60 75 L60 50 L72 50 L72 75 L95 75 L95 55 L110 55 L110 90 Z"
-              fill="#06090F"
-            />
-            {/* Superhero Silhouette on Rooftop */}
-            <Path
-              d="M75 50 C 75 45, 78 40, 83 40 C 86 40, 88 43, 87 46 C 89 48, 90 53, 85 55 C 80 57, 75 55, 75 50 Z"
-              fill="#0F172A"
-            />
-            {/* Electric Streak */}
-            <Path
-              d="M0 45 L30 52 L25 58 L55 64"
-              stroke="#38BDF8"
-              strokeWidth="1.2"
-              strokeOpacity="0.45"
-            />
-          </Svg>
+        {/* Streak Telemetry Badge */}
+        <View style={styles.streakBadge}>
+          <Text style={styles.streakFlame}>⚡</Text>
+          <View>
+            <Text style={styles.streakCount}>{streakDays} DAY</Text>
+            <Text style={styles.streakLabel}>STREAK</Text>
+          </View>
         </View>
       </View>
 
-      {/* 3. Telemetry & Motivation Cards Row */}
-      <View style={styles.cardsRow}>
-        {/* Left: Dual-Arc Circular Progress Ring Card */}
+      {/* 3. Telemetry HUD Row: Circular Progress & Next Activity */}
+      <View style={styles.telemetryRow}>
+        {/* Left: Circular Telemetry Dial */}
         <TouchableOpacity
           style={styles.progressCard}
           onPress={onProgressPress}
@@ -188,7 +158,7 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
         >
           <AnimatedProgress
             percentage={percentage}
-            size={98}
+            size={96}
             strokeWidth={7}
             label="Today's Progress"
             showIcon={true}
@@ -196,51 +166,45 @@ export const HeaderBranding: React.FC<HeaderBrandingProps> = ({
           />
         </TouchableOpacity>
 
-        {/* Right: Stacked Trophy & Next Activity Cards */}
+        {/* Right: Next Activity Command Tile */}
         <View style={styles.rightCardsCol}>
-          {/* Top Motivation Trophy Card */}
-          <View style={styles.trophyCard}>
-            <View style={styles.trophyTextBox}>
-              <View style={styles.trophyHeaderRow}>
-                <Text style={styles.trophyIcon}>🏆</Text>
-                <Text style={styles.trophyTitle}>Great Progress!</Text>
-              </View>
-              <Text style={styles.trophySubtitle}>
-                {percentage >= 100
-                  ? 'All missions cleared! Legendary.'
-                  : "Keep going, you're on fire!"}
-              </Text>
-            </View>
-            <Text style={styles.trophyBigIcon}>🏆</Text>
+          {/* Motivation Status Pill */}
+          <View style={styles.statusTile}>
+            <View style={styles.statusDot} />
+            <Text style={styles.statusText}>
+              {percentage >= 100
+                ? 'All objectives cleared! Exceptional.'
+                : percentage >= 50
+                  ? 'Strong momentum. Keep pushing.'
+                  : 'Mission active. Ready for deployment.'}
+            </Text>
           </View>
 
-          {/* Bottom Next Activity Card */}
+          {/* Next Activity Action Card */}
           <TouchableOpacity
             style={styles.nextActivityCard}
             onPress={onNextActivityPress}
             activeOpacity={0.8}
           >
             <View style={styles.targetIconBox}>
-              <View style={styles.targetOuterCircle}>
-                <View style={styles.targetInnerDot} />
-              </View>
+              <Ionicons name="radio-button-on" size={16} color="#EF4444" />
             </View>
             <View style={styles.nextActivityTextBox}>
-              <Text style={styles.nextActivityLabel}>Next Activity</Text>
+              <Text style={styles.nextActivityLabel}>NEXT OBJECTIVE</Text>
               <Text style={styles.nextActivityTitle} numberOfLines={1}>
                 {nextActivityTitle}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#94A3B8" />
+            <Ionicons name="chevron-forward" size={15} color="#64748B" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* 4. Segmented Navigation Bar: [ 📅 Today ] [ 🔄 Routine ] [ ☑ Tasks ] */}
+      {/* 4. Segmented Switcher: [ Today ] [ Routine ] [ Tasks ] */}
       <View style={styles.segmentedNav}>
         {[
-          { key: 'today', label: 'Today', icon: 'calendar' },
-          { key: 'routine', label: 'Routine', icon: 'sync' },
+          { key: 'today', label: 'Today', icon: 'calendar-outline' },
+          { key: 'routine', label: 'Routine', icon: 'sync-outline' },
           { key: 'tasks', label: 'Tasks', icon: 'checkbox-outline' },
         ].map((tab) => {
           const isSelected = activeTab === tab.key;
@@ -282,222 +246,186 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.sm,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.xs,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   menuBtn: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: Radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  brandCenter: {
-    alignItems: 'center',
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  brandSpidey: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 2,
-  },
-  brandFlow: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#E50914',
-    letterSpacing: 2,
-  },
-  brandTagline: {
-    fontSize: 10,
-    color: '#94A3B8',
-    letterSpacing: 0.8,
-    marginTop: 1,
-  },
-  avatarButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 1.8,
-    overflow: 'hidden',
-    shadowColor: '#E50914',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  avatarImg: {
-    width: '100%',
-    height: '100%',
-  },
-  greetingContainer: {
+  greetingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#0C121D',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     marginBottom: Spacing.md,
   },
   greetingLeft: {
     flex: 1,
-    paddingRight: Spacing.md,
   },
   greetingName: {
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#E2E8F0',
     letterSpacing: 0.2,
   },
   subGreeting: {
-    fontSize: 13,
+    fontSize: 11.5,
     color: '#94A3B8',
     marginTop: 2,
   },
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
     gap: 5,
+    marginTop: 6,
   },
   dateText: {
-    fontSize: 11.5,
+    fontSize: 11,
     color: '#94A3B8',
-    fontWeight: '600',
+    fontWeight: '500',
   },
   dotSeparator: {
-    color: '#64748B',
-    fontSize: 12,
-    marginHorizontal: 3,
+    color: '#475569',
+    fontSize: 10,
   },
-  heroGraphicWrapper: {
-    width: 110,
-    height: 85,
-    justifyContent: 'center',
+  timeText: {
+    fontSize: 11,
+    color: '#38BDF8',
+    fontWeight: '700',
+  },
+  streakBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
-  cardsRow: {
+  streakFlame: {
+    fontSize: 14,
+  },
+  streakCount: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    color: '#38BDF8',
+  },
+  streakLabel: {
+    fontSize: 8.5,
+    fontWeight: '700',
+    color: '#64748B',
+    letterSpacing: 0.8,
+  },
+  telemetryRow: {
     flexDirection: 'row',
     gap: 12,
     marginBottom: Spacing.md,
   },
   progressCard: {
-    flex: 1,
-    backgroundColor: '#0F1622',
-    borderRadius: 18,
+    backgroundColor: '#0C121D',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
+    borderColor: 'rgba(56, 189, 248, 0.18)',
+    padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    minWidth: 116,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 3,
   },
   rightCardsCol: {
-    flex: 1.35,
+    flex: 1,
     justifyContent: 'space-between',
     gap: 8,
   },
-  trophyCard: {
-    flex: 1,
-    backgroundColor: '#0F1622',
-    borderRadius: 16,
+  statusTile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F1624',
+    borderRadius: 11,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.2)',
-    paddingVertical: 10,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingVertical: 9,
+    gap: 8,
   },
-  trophyTextBox: {
-    flex: 1,
-    paddingRight: 6,
-  },
-  trophyHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  trophyIcon: {
-    fontSize: 13,
-  },
-  trophyTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#F59E0B',
-  },
-  trophySubtitle: {
-    fontSize: 10.5,
-    color: '#94A3B8',
-    marginTop: 2,
-  },
-  trophyBigIcon: {
-    fontSize: 24,
-  },
-  nextActivityCard: {
-    flex: 1,
-    backgroundColor: '#0F1622',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.25)',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  targetIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  targetOuterCircle: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1.5,
-    borderColor: '#EF4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  targetInnerDot: {
+  statusDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#EF4444',
+    backgroundColor: '#10B981',
+  },
+  statusText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#CBD5E1',
+    fontWeight: '500',
+    lineHeight: 15,
+  },
+  nextActivityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F1624',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  targetIconBox: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nextActivityTextBox: {
     flex: 1,
   },
   nextActivityLabel: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '800',
     color: '#EF4444',
-    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   nextActivityTitle: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#F8FAFC',
     marginTop: 1,
   },
   segmentedNav: {
     flexDirection: 'row',
-    backgroundColor: '#0B0F17',
+    backgroundColor: '#090E17',
     borderRadius: Radii.pill,
     padding: 3,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    gap: 4,
+    marginBottom: Spacing.sm,
   },
   navPill: {
     flex: 1,
@@ -508,17 +436,17 @@ const styles = StyleSheet.create({
     borderRadius: Radii.pill,
   },
   navPillActive: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: 'rgba(239, 68, 68, 0.14)',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.6)',
+    borderColor: 'rgba(239, 68, 68, 0.4)',
   },
   navPillText: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
     color: '#94A3B8',
   },
   navPillTextActive: {
     color: '#FFFFFF',
-    fontWeight: '800',
+    fontWeight: '700',
   },
 });

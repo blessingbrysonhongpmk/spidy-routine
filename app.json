@@ -25,9 +25,7 @@
         "POST_NOTIFICATIONS",
         "SCHEDULE_EXACT_ALARM",
         "USE_EXACT_ALARM",
-        "VIBRATE",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.MODIFY_AUDIO_SETTINGS"
+        "VIBRATE"
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -57,8 +55,9 @@
         "expo-build-properties",
         {
           "android": {
-            "enableProguardInReleaseBuilds": false,
-            "extraProguardRules": "-dontwarn expo.modules.core.**\n-dontwarn expo.modules.kotlin.**"
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-dontwarn expo.modules.core.**\n-dontwarn expo.modules.kotlin.**\n-keep class com.blessing.spideyflow.** { *; }\n-keep class expo.modules.** { *; }"
           }
         }
       ],

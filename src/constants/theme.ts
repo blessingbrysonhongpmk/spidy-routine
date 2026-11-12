@@ -49,6 +49,124 @@ export const SpideyColors = {
 };
 
 export const Colors = {
+  // 1. Spider-Man: Precision Crimson & Web Obsidian Foundation
+  spiderman: {
+    background: '#0B0C0E',         // Near-black warm charcoal canvas
+    surface: '#13151A',            // Primary card / list surface
+    surfaceHover: '#1A1D24',       // Interactive surface hover/press
+    surfaceElevated: '#1F232D',    // Modals, popovers, elevated sheets
+    inputBackground: '#0F1116',    // Text input & embedded fields
+    border: '#1C1F28',             // Hairline dividers and quiet boundaries
+    borderSubtle: '#1C1F28',       // Hairline dividers
+    borderMuted: '#262B37',        // Normal card borders
+    borderFocus: '#EF4444',        // Focused active border (Spider-Man Crimson)
+    text: '#F8FAFC',               // Clean readable white
+    textSecondary: '#94A3B8',      // Balanced slate grey for metadata
+    textMuted: '#64748B',          // Quiet labels, timestamps
+    textDisabled: '#475569',       // Inactive states
+    primary: '#EF4444',            // Spider-Man Crimson
+    primaryHover: '#DC2626',
+    primarySubtle: 'rgba(239, 68, 68, 0.12)',
+    primaryBorder: 'rgba(239, 68, 68, 0.35)',
+    secondary: '#0EA5E9',          // Thor Tactical Electric Blue
+    secondarySubtle: 'rgba(14, 165, 233, 0.12)',
+    secondaryBorder: 'rgba(14, 165, 233, 0.35)',
+    accent: '#F59E0B',             // Thor Gold for milestones
+    accentSubtle: 'rgba(245, 158, 11, 0.12)',
+    purple: '#8B5CF6',             // Venom Twilight Purple
+    purpleSubtle: 'rgba(139, 92, 246, 0.12)',
+    purpleBorder: 'rgba(139, 92, 246, 0.35)',
+    tint: '#EF4444',
+    tabBarBackground: 'rgba(14, 16, 22, 0.94)',
+    tabBarBorder: 'rgba(239, 68, 68, 0.22)',
+    tabIconDefault: '#64748B',
+    tabIconSelected: '#EF4444',
+    success: '#10B981',
+    successSubtle: 'rgba(16, 185, 129, 0.12)',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    divider: '#181A22',
+  },
+
+  // 2. Thor: Asgardian Storm & Tactical Electric Blue
+  thor: {
+    background: '#070C16',         // Deep Asgardian cosmic night / dark midnight navy
+    surface: '#0D1526',            // Stormy slate card
+    surfaceHover: '#131E36',       // Hover state
+    surfaceElevated: '#182542',    // Modals and elevated sheets
+    inputBackground: '#09101E',    // Deep night inputs
+    border: '#162238',             // Quiet dividers
+    borderSubtle: '#162238',
+    borderMuted: '#223456',        // Normal card borders
+    borderFocus: '#0EA5E9',        // Focused active border (Electric Blue)
+    text: '#F0F9FF',               // Crisp sky-tinted white
+    textSecondary: '#7DD3FC',      // Electric blue slate
+    textMuted: '#476791',          // Muted labels
+    textDisabled: '#2A4363',       // Disabled text
+    primary: '#0EA5E9',            // Tactical Electric Blue (Core)
+    primaryHover: '#0284C7',
+    primarySubtle: 'rgba(14, 165, 233, 0.15)',
+    primaryBorder: 'rgba(14, 165, 233, 0.38)',
+    secondary: '#F59E0B',          // Mjolnir Lightning Gold
+    secondarySubtle: 'rgba(245, 158, 11, 0.15)',
+    secondaryBorder: 'rgba(245, 158, 11, 0.38)',
+    accent: '#38BDF8',             // Pure lightning flash
+    accentSubtle: 'rgba(56, 189, 248, 0.15)',
+    purple: '#818CF8',             // Indigo thunder accent
+    purpleSubtle: 'rgba(129, 140, 248, 0.12)',
+    purpleBorder: 'rgba(129, 140, 248, 0.35)',
+    tint: '#0EA5E9',
+    tabBarBackground: 'rgba(9, 15, 27, 0.95)',
+    tabBarBorder: 'rgba(14, 165, 233, 0.28)',
+    tabIconDefault: '#476791',
+    tabIconSelected: '#0EA5E9',
+    success: '#10B981',
+    successSubtle: 'rgba(16, 185, 129, 0.12)',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    divider: '#142036',
+  },
+
+  // 3. Venom: Lethal Symbiote Violet & Obsidian Pitch
+  venom: {
+    background: '#07050A',         // Abyssal pitch symbiote black
+    surface: '#120D1A',            // Deep obsidian symbiote purple card
+    surfaceHover: '#1B1327',       // Hover state
+    surfaceElevated: '#241934',    // Modals and sheets
+    inputBackground: '#0D0914',    // Pitch input backdrop
+    border: '#1F152C',             // Subtle dividers
+    borderSubtle: '#1F152C',
+    borderMuted: '#312247',        // Normal card borders
+    borderFocus: '#A855F7',        // Focused active border (Symbiote Violet)
+    text: '#FAF5FF',               // Clean lilac-tinged white
+    textSecondary: '#C084FC',      // Symbiote violet
+    textMuted: '#7E6C99',          // Muted labels
+    textDisabled: '#4C3F5E',       // Disabled text
+    primary: '#A855F7',            // Vibrant Symbiote Violet / Purple
+    primaryHover: '#9333EA',
+    primarySubtle: 'rgba(168, 85, 247, 0.16)',
+    primaryBorder: 'rgba(168, 85, 247, 0.40)',
+    secondary: '#10B981',          // Toxic bio-emerald accent
+    secondarySubtle: 'rgba(16, 185, 129, 0.14)',
+    secondaryBorder: 'rgba(16, 185, 129, 0.35)',
+    accent: '#EC4899',             // Neon venom pink tendril glow
+    accentSubtle: 'rgba(236, 72, 153, 0.14)',
+    purple: '#A855F7',
+    purpleSubtle: 'rgba(168, 85, 247, 0.16)',
+    purpleBorder: 'rgba(168, 85, 247, 0.40)',
+    tint: '#A855F7',
+    tabBarBackground: 'rgba(13, 9, 19, 0.95)',
+    tabBarBorder: 'rgba(168, 85, 247, 0.25)',
+    tabIconDefault: '#6B5885',
+    tabIconSelected: '#A855F7',
+    success: '#10B981',
+    successSubtle: 'rgba(16, 185, 129, 0.12)',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    divider: '#1A1326',
+  },
+
+  // Dark (Alias to Spider-Man for full backwards-compatibility)
   dark: {
     background: '#0B0C0E',         // Near-black warm charcoal canvas
     surface: '#13151A',            // Primary card / list surface
@@ -163,4 +281,5 @@ export const InteractionStates = {
   disabledOpacity: 0.45,
 };
 
-export type ThemeType = 'dark' | 'light';
+export type HeroTheme = 'spiderman' | 'thor' | 'venom';
+export type ThemeType = 'spiderman' | 'thor' | 'venom' | 'dark' | 'light';

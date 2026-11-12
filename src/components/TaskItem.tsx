@@ -1,10 +1,11 @@
 import { Radii, Spacing } from '@/constants/theme';
 import { useSound } from '@/context/SoundContext';
 import { useTheme } from '@/hooks/use-theme';
+import { confirmAction } from '@/services/platformAlert';
 import { Task } from '@/types';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useLightning } from './LightningEffect';
 import { TensileWebFilament } from './TensileWebFilament';
 import { WebCompletionAnimation } from './WebCompletionAnimation';
@@ -52,22 +53,17 @@ export const TaskItem: React.FC<TaskItemProps> = ({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Task',
-      `Are you sure you want to remove "${task.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            playSound('deleteAction');
-            triggerHaptic('medium');
-            onDelete(task.id);
-          },
-        },
-      ]
-    );
+    confirmAction({
+      title: 'Delete Task',
+      message: `Are you sure you want to remove "${task.title}"?`,
+      confirmText: 'Delete',
+      destructive: true,
+      onConfirm: () => {
+        playSound('deleteAction');
+        triggerHaptic('medium');
+        onDelete(task.id);
+      },
+    });
   };
 
   return (

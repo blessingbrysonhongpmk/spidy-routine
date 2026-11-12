@@ -1,22 +1,21 @@
+import { SpidyButton } from '@/components/SpidyButton';
+import { SpidyInput } from '@/components/SpidyInput';
+import { SpidyLogo } from '@/components/SpidyLogo';
 import { WebBackground } from '@/components/WebBackground';
-import { WebButtonInteraction } from '@/components/WebButtonInteraction';
 import { Radii, Spacing, SpideyColors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useSound } from '@/context/SoundContext';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
+import { showAlert } from '@/services/platformAlert';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 export default function AuthScreen() {
@@ -32,7 +31,7 @@ export default function AuthScreen() {
 
   const handleSubmit = async () => {
     if (!email || !password) {
-      Alert.alert('Required Fields', 'Please fill in both email and password.');
+      showAlert('Required Fields', 'Please fill in both email and password.');
       return;
     }
 
@@ -48,7 +47,7 @@ export default function AuthScreen() {
       triggerHaptic('success');
       router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Authentication Notice', error.message || 'Login failed. Please verify credentials.');
+      showAlert('Authentication Notice', error.message || 'Login failed. Please verify credentials.');
     } finally {
       setLoading(false);
     }
@@ -64,7 +63,7 @@ export default function AuthScreen() {
       triggerHaptic('success');
       router.replace('/(tabs)');
     } catch (err: any) {
-      Alert.alert('Google Sign-In', err.message || 'Could not sign in with Google.');
+      showAlert('Google Sign-In', err.message || 'Could not sign in with Google.');
     } finally {
       setLoading(false);
     }
@@ -84,15 +83,10 @@ export default function AuthScreen() {
       <WebBackground />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Operative Portrait Avatar & Brand Header */}
+        {/* Vector Spidy Brand Header (Zero personal photo) */}
         <View style={styles.brandBox}>
-          <View style={styles.heroAvatarBadge}>
-            <Image
-              source={require('@/assets/images/hero-portrait.jpg')}
-              style={styles.heroAvatarImg}
-              contentFit="cover"
-            />
-            <View style={styles.heroAvatarRing} />
+          <View style={styles.heroLogoWrapper}>
+            <SpidyLogo variant="hero" size={72} />
           </View>
           <Text style={styles.taglineSub}>YOUR DAY. YOUR MISSION.</Text>
           <View style={styles.logoRow}>
@@ -108,61 +102,52 @@ export default function AuthScreen() {
             {isRegister ? 'OPERATIVE REGISTRATION' : 'SECURITY CLEARANCE'}
           </Text>
 
-          {isRegister ? (
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>OPERATIVE NAME</Text>
-              <TextInput
-                style={styles.textInput}
+          <View style={{ gap: 14 }}>
+            {isRegister ? (
+              <SpidyInput
+                label="OPERATIVE NAME"
                 placeholder="e.g. Blessing"
-                placeholderTextColor={SpideyColors.textMuted}
                 value={name}
                 onChangeText={setName}
+                leftIcon="person-outline"
+                showClearButton
               />
-            </View>
-          ) : null}
+            ) : null}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
-            <TextInput
-              style={styles.textInput}
+            <SpidyInput
+              label="EMAIL ADDRESS"
               placeholder="operative@spideyflow.app"
-              placeholderTextColor={SpideyColors.textMuted}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              leftIcon="mail-outline"
+              showClearButton
             />
-          </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>ACCESS CODE / PASSWORD</Text>
-            <TextInput
-              style={styles.textInput}
+            <SpidyInput
+              label="ACCESS CODE / PASSWORD"
               placeholder="••••••••••••"
-              placeholderTextColor={SpideyColors.textMuted}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              leftIcon="lock-closed-outline"
             />
           </View>
 
-          {/* Primary Action Button with Web Pull */}
-          <WebButtonInteraction
-            style={styles.submitBtn}
-            onPress={handleSubmit}
-            disabled={loading}
-            variant="primary"
-            sound="buttonTap"
-            haptic="medium"
-          >
-            <Text style={styles.submitBtnText}>
-              {loading
-                ? 'VERIFYING...'
-                : isRegister
-                  ? 'CREATE CLEARANCE'
-                  : 'ENTER MISSION CONTROL'}
-            </Text>
-          </WebButtonInteraction>
+          {/* Primary Action Button */}
+          <View style={{ marginTop: 20 }}>
+            <SpidyButton
+              title={loading ? 'VERIFYING...' : isRegister ? 'CREATE CLEARANCE' : 'ENTER MISSION CONTROL'}
+              onPress={handleSubmit}
+              loading={loading}
+              variant="primary"
+              size="lg"
+              icon="shield-checkmark"
+              sound="buttonTap"
+              haptic="medium"
+            />
+          </View>
 
           {/* Switch Login / Register */}
           <TouchableOpacity
@@ -182,29 +167,27 @@ export default function AuthScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Google Sign In with Web Pull */}
-          <WebButtonInteraction
-            style={styles.googleBtn}
+          {/* Google Sign In */}
+          <SpidyButton
+            title="Continue with Google"
             onPress={handleGoogleLogin}
             disabled={loading}
             variant="subtle"
+            size="md"
+            icon="logo-google"
             sound="buttonTap"
-            haptic="light"
-          >
-            <Ionicons name="logo-google" size={17} color="#EA4335" style={{ marginRight: 8 }} />
-            <Text style={styles.googleBtnText}>Continue with Google</Text>
-          </WebButtonInteraction>
+          />
 
-          {/* Guest / Offline Access with Web Pull */}
-          <WebButtonInteraction
-            style={styles.guestBtn}
-            onPress={handleGuestAccess}
-            variant="subtle"
-            sound="symbioteWhoosh"
-            haptic="light"
-          >
-            <Text style={styles.guestBtnText}>Continue Offline as Guest</Text>
-          </WebButtonInteraction>
+          {/* Guest / Offline Access */}
+          <View style={{ marginTop: 10 }}>
+            <SpidyButton
+              title="Continue Offline as Guest"
+              onPress={handleGuestAccess}
+              variant="ghost"
+              size="md"
+              sound="symbioteWhoosh"
+            />
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -225,34 +208,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.xl,
   },
-  heroAvatarBadge: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    overflow: 'hidden',
-    position: 'relative',
+  heroLogoWrapper: {
     marginBottom: Spacing.md,
-    borderWidth: 2,
-    borderColor: SpideyColors.spideyRed,
     shadowColor: SpideyColors.spideyRed,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  heroAvatarImg: {
-    width: '100%',
-    height: '100%',
-  },
-  heroAvatarRing: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 37,
-    borderWidth: 1.5,
-    borderColor: 'rgba(14, 165, 233, 0.4)',
+    shadowRadius: 12,
   },
   taglineSub: {
     color: SpideyColors.textMuted,

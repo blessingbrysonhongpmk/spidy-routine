@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { DatabaseProvider, useDatabase } from '@/context/DatabaseContext';
 import { SoundProvider } from '@/context/SoundContext';
 import { ThemeProvider, useThemeContext } from '@/context/ThemeContext';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -31,6 +31,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
 let sessionIntroShown = false;
 
 function AppNavigation() {
+  const pathname = usePathname();
   const { initialized } = useDatabase();
   const { loading } = useAuth();
   const { isDark, colors } = useThemeContext();
@@ -76,8 +77,22 @@ function AppNavigation() {
         <Stack.Screen
           name="modal-routine"
           options={{
-            presentation: 'modal',
+            presentation: 'transparentModal',
             animation: 'slide_from_bottom',
+          }}
+        />
+        <Stack.Screen
+          name="analytics"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="achievements"
+          options={{
+            presentation: 'modal',
+            animation: 'slide_from_right',
           }}
         />
         <Stack.Screen
@@ -104,7 +119,7 @@ function AppNavigation() {
       </Stack>
 
       {/* Cinematic Startup Overlay */}
-      {showIntro && (
+      {showIntro && pathname !== '/intro' && (
         <CinematicIntro
           isAppReady={isAppReady}
           onComplete={handleIntroComplete}

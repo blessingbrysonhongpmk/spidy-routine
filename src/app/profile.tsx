@@ -1,16 +1,17 @@
+import { SpidyButton } from '@/components/SpidyButton';
+import { SpidyInput } from '@/components/SpidyInput';
+import { SpidyAvatar } from '@/components/SpidyLogo';
 import { WebBackground } from '@/components/WebBackground';
-import { WebButtonInteraction } from '@/components/WebButtonInteraction';
 import { Radii, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useSound } from '@/context/SoundContext';
-import { ThemeMode, useThemeContext } from '@/context/ThemeContext';
+import { useThemeContext } from '@/context/ThemeContext';
 import { useTheme } from '@/hooks/use-theme';
+import { showAlert } from '@/services/platformAlert';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -18,7 +19,6 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -52,7 +52,7 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Agent Name Required', 'Please provide a name or secret identity.');
+      showAlert('Agent Name Required', 'Please provide a name or secret identity.');
       return;
     }
 
@@ -76,11 +76,11 @@ export default function ProfileScreen() {
 
       playSound('successConfirm');
       triggerHaptic('success');
-      Alert.alert('Dossier Authorized', 'Your hero profile has been updated and securely persisted.');
+      showAlert('Dossier Authorized', 'Your hero profile has been updated and securely persisted.');
       router.back();
     } catch (err) {
       console.error('Failed to update profile:', err);
-      Alert.alert('Error', 'Failed to save profile changes. Please try again.');
+      showAlert('Error', 'Failed to save profile changes. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -162,25 +162,15 @@ export default function ProfileScreen() {
                 setHeroArchetype(nextType);
               }}
               activeOpacity={0.8}
-              accessibilityLabel="Change avatar"
+              accessibilityLabel="Change avatar archetype"
             >
-              {avatarType === 'thor' ? (
-                <View style={[styles.avatarEmblemBox, { backgroundColor: '#0C1B2A' }]}>
-                  <Ionicons name="flash" size={32} color="#38BDF8" />
-                </View>
-              ) : avatarType === 'venom' ? (
-                <View style={[styles.avatarEmblemBox, { backgroundColor: '#1A0B2E' }]}>
-                  <Ionicons name="water" size={32} color="#A855F7" />
-                </View>
-              ) : (
-                <Image
-                  source={require('@/assets/images/hero-portrait.jpg')}
-                  style={styles.avatarImg}
-                  contentFit="cover"
-                />
-              )}
+              <SpidyAvatar
+                size={76}
+                name={name || 'Agent'}
+                archetype={heroArchetype}
+              />
               <View style={styles.avatarEditBadge}>
-                <Ionicons name="camera-reverse" size={11} color="#FFFFFF" />
+                <Ionicons name="sparkles" size={11} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
 
@@ -201,106 +191,59 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>OPERATIVE IDENTITY</Text>
 
-            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted }]}>
+            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderMuted, padding: 14, gap: 14 }]}>
               {/* Full Name */}
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>FULL NAME *</Text>
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.borderSubtle,
-                      color: colors.text,
-                    },
-                  ]}
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="e.g. Peter Parker / Blessing"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
+              <SpidyInput
+                label="FULL NAME *"
+                value={name}
+                onChangeText={setName}
+                placeholder="e.g. Peter Parker / Blessing"
+                leftIcon="person-outline"
+                showClearButton
+              />
 
               {/* Codename / Call-Sign */}
-              <View style={[styles.fieldGroup, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>CODENAME / CALL-SIGN</Text>
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.borderSubtle,
-                      color: colors.text,
-                    },
-                  ]}
-                  value={callsign}
-                  onChangeText={setCallsign}
-                  placeholder="e.g. Boss, Spidey, Thunder God, Shadow"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
+              <SpidyInput
+                label="CODENAME / CALL-SIGN"
+                value={callsign}
+                onChangeText={setCallsign}
+                placeholder="e.g. Boss, Spidey, Thunder God"
+                leftIcon="shield-outline"
+                showClearButton
+              />
 
               {/* Tactical Bio / Motto */}
-              <View style={[styles.fieldGroup, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>TACTICAL MOTTO / BIO</Text>
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    styles.textArea,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.borderSubtle,
-                      color: colors.text,
-                    },
-                  ]}
-                  value={bio}
-                  onChangeText={setBio}
-                  placeholder="e.g. Your Day. Your Mission. Focused on discipline and daily conquests."
-                  placeholderTextColor={colors.textMuted}
-                  multiline
-                  numberOfLines={2}
-                />
-              </View>
+              <SpidyInput
+                label="TACTICAL MOTTO / BIO"
+                value={bio}
+                onChangeText={setBio}
+                placeholder="e.g. Your Day. Your Mission. Focused on daily conquests."
+                leftIcon="document-text-outline"
+                multiline
+                numberOfLines={2}
+              />
 
               {/* Email */}
-              <View style={[styles.fieldGroup, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>COMMUNICATION EMAIL</Text>
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.borderSubtle,
-                      color: colors.text,
-                    },
-                  ]}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="operative@spideyflow.app"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
+              <SpidyInput
+                label="COMMUNICATION EMAIL"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="operative@spideyflow.app"
+                leftIcon="mail-outline"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                showClearButton
+              />
 
               {/* Date of Birth (Optional) */}
-              <View style={[styles.fieldGroup, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>DATE OF BIRTH (OPTIONAL)</Text>
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.borderSubtle,
-                      color: colors.text,
-                    },
-                  ]}
-                  value={dob}
-                  onChangeText={setDob}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.textMuted}
-                />
-              </View>
+              <SpidyInput
+                label="DATE OF BIRTH (OPTIONAL)"
+                value={dob}
+                onChangeText={setDob}
+                placeholder="YYYY-MM-DD"
+                leftIcon="calendar-outline"
+                showClearButton
+              />
             </View>
           </View>
 
@@ -388,21 +331,13 @@ export default function ProfileScreen() {
               </View>
 
               {/* Wake-Up Time */}
-              <View style={[styles.fieldGroup, styles.borderTop, { borderTopColor: colors.borderSubtle }]}>
-                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>PREFERRED WAKE-UP TIME</Text>
-                <TextInput
-                  style={[
-                    styles.textInput,
-                    {
-                      backgroundColor: colors.inputBackground,
-                      borderColor: colors.borderSubtle,
-                      color: colors.text,
-                    },
-                  ]}
+              <View style={[styles.fieldGroup, styles.borderTop, { borderTopColor: colors.borderSubtle, paddingTop: 12 }]}>
+                <SpidyInput
+                  label="PREFERRED WAKE-UP TIME"
                   value={wakeTime}
                   onChangeText={setWakeTime}
                   placeholder="06:00 AM"
-                  placeholderTextColor={colors.textMuted}
+                  leftIcon="time-outline"
                 />
               </View>
             </View>
@@ -417,30 +352,54 @@ export default function ProfileScreen() {
               <View style={styles.fieldGroup}>
                 <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>THEME PREFERENCE</Text>
                 <View style={styles.themeSelectorRow}>
-                  {(['dark', 'light', 'system'] as ThemeMode[]).map((mode) => {
-                    const isSelected = themeMode === mode;
+                  {[
+                    { id: 'spiderman' as const, label: 'Spidey', icon: 'radio-outline' as const, color: '#EF4444' },
+                    { id: 'thor' as const, label: 'Thor', icon: 'flash-outline' as const, color: '#0EA5E9' },
+                    { id: 'venom' as const, label: 'Venom', icon: 'water-outline' as const, color: '#A855F7' },
+                    { id: 'light' as const, label: 'Light', icon: 'sunny-outline' as const, color: '#F59E0B' },
+                    { id: 'system' as const, label: 'Auto', icon: 'phone-portrait-outline' as const, color: colors.textSecondary },
+                  ].map((item) => {
+                    const isSelected =
+                      themeMode === item.id || (item.id === 'spiderman' && themeMode === 'dark');
                     return (
                       <TouchableOpacity
-                        key={mode}
+                        key={item.id}
                         style={[
                           styles.themeBtn,
                           {
-                            backgroundColor: isSelected ? colors.primarySubtle : colors.inputBackground,
-                            borderColor: isSelected ? colors.primary : colors.borderSubtle,
+                            backgroundColor: isSelected ? `${item.color}22` : colors.inputBackground,
+                            borderColor: isSelected ? item.color : colors.borderSubtle,
                           },
                         ]}
                         onPress={() => {
-                          playSound('buttonTap');
-                          setThemeMode(mode);
+                          if (item.id === 'spiderman') {
+                            playSound('webShoot');
+                          } else if (item.id === 'thor') {
+                            playSound('thunderMilestone');
+                          } else if (item.id === 'venom') {
+                            playSound('symbioteWhoosh');
+                          } else {
+                            playSound('buttonTap');
+                          }
+                          triggerHaptic('light');
+                          setThemeMode(item.id);
                         }}
                       >
+                        <Ionicons
+                          name={item.icon}
+                          size={13}
+                          color={isSelected ? item.color : colors.textMuted}
+                        />
                         <Text
                           style={[
                             styles.themeBtnText,
-                            { color: isSelected ? colors.primary : colors.textMuted },
+                            {
+                              color: isSelected ? item.color : colors.textMuted,
+                              fontWeight: isSelected ? '800' : '500',
+                            },
                           ]}
                         >
-                          {mode.toUpperCase()}
+                          {item.label}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -493,17 +452,18 @@ export default function ProfileScreen() {
           </View>
 
           {/* Submit Action Button */}
-          <WebButtonInteraction
-            style={[styles.saveBtn, { backgroundColor: colors.primary }]}
-            onPress={handleSave}
-            variant="primary"
-            sound="thunderMilestone"
-            haptic="success"
-          >
-            <Text style={styles.saveBtnText}>
-              {isSaving ? 'AUTHORIZING...' : 'LOCK IN HERO PROFILE'}
-            </Text>
-          </WebButtonInteraction>
+          <View style={{ marginTop: 24, marginBottom: 40 }}>
+            <SpidyButton
+              title={isSaving ? 'AUTHORIZING...' : 'LOCK IN HERO PROFILE'}
+              onPress={handleSave}
+              variant="primary"
+              size="lg"
+              icon="shield-checkmark"
+              sound="thunderMilestone"
+              haptic="success"
+              loading={isSaving}
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -690,10 +650,13 @@ const styles = StyleSheet.create({
   },
   themeBtn: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 8,
     borderRadius: Radii.sm,
     borderWidth: 1,
+    gap: 4,
   },
   themeBtnText: {
     fontSize: 11,

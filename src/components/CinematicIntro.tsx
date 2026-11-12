@@ -2,16 +2,15 @@ import { SpideyColors } from '@/constants/theme';
 import { getAppSetting, setAppSetting } from '@/services/database';
 import { playSound, triggerHaptic } from '@/services/sound';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Image,
   Platform,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import Animated, {
@@ -27,7 +26,6 @@ import Animated, {
 import Svg, {
   Circle,
   Defs,
-  LinearGradient,
   Path,
   RadialGradient,
   Stop,
@@ -40,12 +38,15 @@ interface CinematicIntroProps {
   onRetry?: () => void;
 }
 
+const posterSource = require('../../assets/images/loading-poster.jpg');
+
 /**
  * CinematicIntro:
- * High-craftsmanship personalized cinematic startup experience.
- * Features the user's comic-book hero poster artwork edge-to-edge,
+ * High-craftsmanship personalized cinematic startup and loading experience.
+ * Features the superhero Bryvolt poster artwork edge-to-edge,
  * layered with dynamic Thor electric-blue lightning flashes,
- * an active laser progress bar fill, symbiote atmospheric pulse,
+ * pulsing Spider-Man crimson web glints, an active laser progress bar fill,
+ * real-time percentage counter (0% -> 100%), dynamic mission telemetry cycling,
  * audio/haptic cues, and an instant Skip button.
  */
 export const CinematicIntro: React.FC<CinematicIntroProps> = ({
@@ -54,101 +55,186 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
   initError,
   onRetry,
 }) => {
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const screenWidth = windowWidth || 380;
-  const screenHeight = windowHeight || 800;
-
   const completedRef = useRef(false);
+  const [minBarComplete, setMinBarComplete] = useState(false);
+  const [percent, setPercent] = useState(0);
+  const [statusText, setStatusText] = useState('A boy with a dream. A city waiting for a hero...');
 
   // Animation Shared Values
   const screenOpacity = useSharedValue(1);
   const lightningOpacity = useSharedValue(0);
   const webGlintOpacity = useSharedValue(0);
   const progressBarWidth = useSharedValue(0);
-  const symbiotePulse = useSharedValue(0.7);
+  const laserSparkPulse = useSharedValue(1);
+  const heartbeatPulse = useSharedValue(1);
+  const emberPulse = useSharedValue(0.4);
 
-  // Safe dismiss helper with Reanimated fade-out
+  const fallbackDismissRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Safe dismiss helper with Reanimated fade-out + web/timeout guarantee
+  const completeOnce = useCallback(() => {
+    if (fallbackDismissRef.current) {
+      clearTimeout(fallbackDismissRef.current);
+      fallbackDismissRef.current = null;
+    }
+    onComplete();
+  }, [onComplete]);
+
   const finishIntro = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
 
+    fallbackDismissRef.current = setTimeout(() => {
+      completeOnce();
+    }, 380);
+
     screenOpacity.value = withTiming(
       0,
-      { duration: 340, easing: Easing.out(Easing.cubic) },
-      () => {
-        runOnJS(onComplete)();
+      { duration: 320, easing: Easing.out(Easing.cubic) },
+      (finished) => {
+        if (finished) {
+          runOnJS(completeOnce)();
+        }
       }
     );
-  }, [onComplete, screenOpacity]);
+  }, [completeOnce, screenOpacity]);
 
   // Immediate Skip handling
   const handleSkip = useCallback(() => {
     triggerHaptic('light');
+    playSound('buttonTap');
     finishIntro();
   }, [finishIntro]);
 
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Symbiote organic breathing pulse
-    symbiotePulse.value = withRepeat(
+    // 1. Spider web specular glint
+    webGlintOpacity.value = withDelay(
+      150,
       withSequence(
-        withTiming(1.0, { duration: 1600, easing: Easing.inOut(Easing.quad) }),
-        withTiming(0.65, { duration: 1600, easing: Easing.inOut(Easing.quad) })
+        withTiming(0.85, { duration: 320, easing: Easing.out(Easing.quad) }),
+        withTiming(0.35, { duration: 500, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0.7, { duration: 400, easing: Easing.inOut(Easing.quad) })
+      )
+    );
+
+    // 2. Thor electric-blue lightning streak flashes (Initial strike + second surge)
+    lightningOpacity.value = withDelay(
+      380,
+      withSequence(
+        withTiming(1.0, { duration: 60 }),
+        withTiming(0.15, { duration: 35 }),
+        withTiming(0.95, { duration: 75 }),
+        withTiming(0, { duration: 280, easing: Easing.out(Easing.quad) }),
+        withDelay(
+          550,
+          withSequence(
+            withTiming(0.85, { duration: 50 }),
+            withTiming(0.1, { duration: 30 }),
+            withTiming(0.7, { duration: 60 }),
+            withTiming(0, { duration: 250, easing: Easing.out(Easing.quad) })
+          )
+        )
+      )
+    );
+
+    // 3. Laser spark pulse at leading edge of progress bar
+    laserSparkPulse.value = withRepeat(
+      withSequence(
+        withTiming(1.3, { duration: 250, easing: Easing.inOut(Easing.quad) }),
+        withTiming(0.9, { duration: 250, easing: Easing.inOut(Easing.quad) })
       ),
       -1,
       true
     );
 
-    // 2. Spider web specular glint
-    webGlintOpacity.value = withDelay(
-      200,
+    // 4. Hero heart-pulse (emblem rhythm that melts the heart)
+    heartbeatPulse.value = withRepeat(
       withSequence(
-        withTiming(0.8, { duration: 300, easing: Easing.out(Easing.quad) }),
-        withTiming(0.3, { duration: 500, easing: Easing.inOut(Easing.quad) })
-      )
+        withTiming(1.22, { duration: 150, easing: Easing.out(Easing.quad) }),
+        withTiming(1.0, { duration: 90, easing: Easing.in(Easing.quad) }),
+        withTiming(1.12, { duration: 130, easing: Easing.out(Easing.quad) }),
+        withTiming(1.0, { duration: 680, easing: Easing.inOut(Easing.quad) })
+      ),
+      -1,
+      true
     );
 
-    // 3. Thor electric-blue lightning streak flash
-    lightningOpacity.value = withDelay(
-      420,
+    // 5. Ambient glowing stardust/embers drifting upward
+    emberPulse.value = withRepeat(
       withSequence(
-        withTiming(1.0, { duration: 70 }),
-        withTiming(0.2, { duration: 40 }),
-        withTiming(0.9, { duration: 80 }),
-        withTiming(0, { duration: 320, easing: Easing.out(Easing.quad) })
-      )
+        withTiming(0.95, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+        withTiming(0.35, { duration: 1800, easing: Easing.inOut(Easing.sin) })
+      ),
+      -1,
+      true
     );
 
-    // 4. Active Progress Bar fills smoothly from 0% to 100%
+    // 6. Smooth Progress Bar fill (0 -> 1 over ~1800ms)
     progressBarWidth.value = withDelay(
-      250,
+      200,
       withTiming(1, {
-        duration: 1550,
+        duration: 1750,
         easing: Easing.bezier(0.16, 1, 0.3, 1),
       })
     );
 
-    // 5. Sound & Haptic FX
+    // 7. Emotional Procedural Sound & Haptic FX Sequence
     try {
       playSound('startupWhoosh');
 
       setTimeout(() => {
         if (!isMounted || completedRef.current) return;
-        playSound('electricCrackle');
+        playSound('webShoot');
         triggerHaptic('medium');
-      }, 420);
+      }, 550);
 
       setTimeout(() => {
         if (!isMounted || completedRef.current) return;
-        playSound('webShoot');
+        playSound('electricCrackle');
         triggerHaptic('light');
-      }, 900);
+      }, 1050);
+
+      setTimeout(() => {
+        if (!isMounted || completedRef.current) return;
+        playSound('thunderMilestone');
+        triggerHaptic('success');
+      }, 1850);
     } catch {
       // Audio engine gracefully non-blocking
     }
 
-    // 6. Decoupled Settings Check
+    // 8. Inspiring Heart-Melting Heroic Journey Subtitles
+    const startTime = Date.now();
+    const duration = 1800;
+    const progressInterval = setInterval(() => {
+      if (!isMounted || completedRef.current) return;
+      const elapsed = Date.now() - startTime;
+      const rawProgress = Math.min(1, Math.max(0, elapsed / duration));
+      // Ease out progress curve
+      const easedProgress = Math.min(100, Math.round((1 - Math.pow(1 - rawProgress, 2.2)) * 100));
+
+      setPercent(easedProgress);
+
+      if (easedProgress < 22) {
+        setStatusText('A city in shadows. A hero takes his stand...');
+      } else if (easedProgress < 46) {
+        setStatusText('Master the webs. Command the thunder...');
+      } else if (easedProgress < 70) {
+        setStatusText('Every sunrise is your mission. Stand tall.');
+      } else if (easedProgress < 92) {
+        setStatusText('Embrace your destiny. Conquer today.');
+      } else {
+        setStatusText('Welcome home, Boss. Your legacy begins.');
+      }
+
+      if (easedProgress >= 100) {
+        clearInterval(progressInterval);
+      }
+    }, 35);
+
+    // 7. Check if user disabled intro in settings
     (async () => {
       try {
         const introEnabled = (await getAppSetting('intro_enabled', 'true')) === 'true';
@@ -162,40 +248,49 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
       }
     })();
 
-    // 7. Auto-dismiss when animation finishes (~2.2s)
+    // Mark progress bar ready at ~1.85s
+    const barReadyTimer = setTimeout(() => {
+      if (isMounted) setMinBarComplete(true);
+    }, 1880);
+
+    // Auto-dismiss when complete (~2.2s)
     const autoDismissTimer = setTimeout(() => {
       if (!isMounted || completedRef.current) return;
       finishIntro();
     }, 2250);
 
-    // 8. Hard safety timeout (Guarantees user is never trapped)
+    // Hard fallback timeout (Guarantees user is never stuck)
     const hardFallbackTimer = setTimeout(() => {
       if (!isMounted || completedRef.current) return;
       finishIntro();
-    }, 3200);
+    }, 3400);
 
     return () => {
       isMounted = false;
+      clearInterval(progressInterval);
+      clearTimeout(barReadyTimer);
       clearTimeout(autoDismissTimer);
       clearTimeout(hardFallbackTimer);
     };
   }, [
+    emberPulse,
     finishIntro,
+    heartbeatPulse,
+    laserSparkPulse,
     lightningOpacity,
     progressBarWidth,
-    symbiotePulse,
     webGlintOpacity,
   ]);
 
-  // When app initialization is ready and progress bar has completed
+  // When app initialization is ready and progress bar animation has finished
   useEffect(() => {
-    if (isAppReady && !completedRef.current && progressBarWidth.value >= 0.98) {
+    if (isAppReady && minBarComplete && !completedRef.current) {
       const exitTimer = setTimeout(() => {
         finishIntro();
       }, 200);
       return () => clearTimeout(exitTimer);
     }
-  }, [isAppReady, finishIntro, progressBarWidth.value]);
+  }, [isAppReady, minBarComplete, finishIntro]);
 
   // Animated Styles
   const screenAnimStyle = useAnimatedStyle(() => ({
@@ -210,158 +305,160 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
     opacity: webGlintOpacity.value,
   }));
 
-  const symbioteAnimStyle = useAnimatedStyle(() => ({
-    opacity: symbiotePulse.value,
-  }));
-
   const progressFillAnimStyle = useAnimatedStyle(() => ({
     width: `${Math.min(100, Math.max(0, progressBarWidth.value * 100))}%`,
   }));
 
-  // Target coordinates for progress bar overlay matching poster layout
-  // Progress bar in 472x1024 poster sits at ~83.6% of screen height
-  const progressTopOffset = Math.round(screenHeight * 0.834);
-  const progressTrackWidth = Math.min(Math.round(screenWidth * 0.73), 320);
+  const laserHeadAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: laserSparkPulse.value }],
+  }));
+
+  const heartbeatAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: heartbeatPulse.value }],
+    opacity: heartbeatPulse.value > 1.05 ? 0.75 : 0.35,
+  }));
+
+  const emberAnimStyle = useAnimatedStyle(() => ({
+    opacity: emberPulse.value,
+  }));
 
   return (
     <Animated.View style={[styles.fullScreenContainer, screenAnimStyle]}>
       <ExpoStatusBar style="light" />
 
-      {/* 1. Full-Screen Personalized Comic Hero Poster Background */}
-      <Image
-        source={require('@/assets/images/hero-portrait.jpg')}
-        style={StyleSheet.absoluteFill}
-        contentFit="cover"
-        priority="high"
-        transition={200}
-      />
+      {/* Centered Mobile Phone Viewport Frame */}
+      <View style={styles.phoneFrame}>
+        {/* 1. Superhero Bryvolt Poster Edge-to-Edge Artwork */}
+        <Image
+          source={posterSource}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        />
 
-      {/* 2. Top Bar Subtle Dark Gradient (Ensures Skip button legibility on all notches) */}
-      <View style={styles.topVignette} pointerEvents="none">
-        <Svg width="100%" height={100} fill="none">
-          <Defs>
-            <LinearGradient id="topVignetteGrad" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor="#000000" stopOpacity="0.65" />
-              <Stop offset="60%" stopColor="#000000" stopOpacity="0.25" />
-              <Stop offset="100%" stopColor="#000000" stopOpacity="0" />
-            </LinearGradient>
-          </Defs>
-          <Path d={`M0 0 H${screenWidth} V100 H0 Z`} fill="url(#topVignetteGrad)" />
-        </Svg>
-      </View>
+        {/* Hero Heartbeat & Life Force Pulse Layer (Over young hero's chest/emblem) */}
+        <Animated.View style={[styles.heroHeartbeatContainer, heartbeatAnimStyle]} pointerEvents="none">
+          <Svg width={120} height={120} viewBox="0 0 120 120" fill="none">
+            <Defs>
+              <RadialGradient id="heroHeartGlow" cx="50%" cy="50%" r="50%">
+                <Stop offset="0%" stopColor="#EF4444" stopOpacity="0.75" />
+                <Stop offset="40%" stopColor="#EF4444" stopOpacity="0.25" />
+                <Stop offset="80%" stopColor="#38BDF8" stopOpacity="0.08" />
+                <Stop offset="100%" stopColor="#070A0F" stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
+            <Circle cx="60" cy="60" r="55" fill="url(#heroHeartGlow)" />
+          </Svg>
+        </Animated.View>
 
-      {/* 3. Spider-Man Corner Web Specular Pulse (Top Left) */}
-      <Animated.View style={[styles.webCornerOverlay, webAnimStyle]} pointerEvents="none">
-        <Svg width={180} height={180} viewBox="0 0 180 180" fill="none">
-          <Defs>
-            <RadialGradient id="webCrimsonGlow" cx="0%" cy="0%" r="90%">
-              <Stop offset="0%" stopColor="#EF4444" stopOpacity="0.45" />
-              <Stop offset="50%" stopColor="#EF4444" stopOpacity="0.15" />
-              <Stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
-            </RadialGradient>
-          </Defs>
-          <Path d="M0 0 H180 V180 H0 Z" fill="url(#webCrimsonGlow)" />
-        </Svg>
-      </Animated.View>
+        {/* Ambient Rising Stardust & Superhero Embers */}
+        <Animated.View style={[StyleSheet.absoluteFill, emberAnimStyle]} pointerEvents="none">
+          <Svg width="100%" height="100%" viewBox="0 0 400 700" fill="none">
+            <Circle cx="85" cy="520" r="1.8" fill="#FDE047" opacity="0.8" />
+            <Circle cx="120" cy="460" r="2.2" fill="#EF4444" opacity="0.7" />
+            <Circle cx="170" cy="490" r="1.5" fill="#38BDF8" opacity="0.8" />
+            <Circle cx="230" cy="440" r="2.5" fill="#FFFFFF" opacity="0.9" />
+            <Circle cx="290" cy="510" r="1.6" fill="#C084FC" opacity="0.7" />
+            <Circle cx="330" cy="470" r="2.0" fill="#38BDF8" opacity="0.85" />
+            <Circle cx="140" cy="380" r="1.4" fill="#F59E0B" opacity="0.75" />
+            <Circle cx="260" cy="360" r="2.0" fill="#EF4444" opacity="0.8" />
+          </Svg>
+        </Animated.View>
 
-      {/* 4. Thor Electric-Blue Lightning Arc Overlay (Upper Right) */}
-      <Animated.View style={[styles.lightningOverlay, lightningAnimStyle]} pointerEvents="none">
-        <Svg width="100%" height="100%" viewBox="0 0 240 320" fill="none">
-          <Path
-            d="M210 15 L165 75 L180 92 L120 165 L140 180 L80 255"
-            stroke="#38BDF8"
-            strokeWidth="3.2"
-            strokeOpacity="0.95"
-          />
-          <Path
-            d="M210 15 L165 75 L180 92 L120 165 L140 180 L80 255"
-            stroke="#FFFFFF"
-            strokeWidth="1.5"
-            strokeOpacity="1"
-          />
-          <Path
-            d="M165 75 L130 95 L115 130"
-            stroke="#0EA5E9"
-            strokeWidth="1.6"
-            strokeOpacity="0.75"
-          />
-          <Path
-            d="M120 165 L155 190 L145 220"
-            stroke="#38BDF8"
-            strokeWidth="1.4"
-            strokeOpacity="0.7"
-          />
-          <Circle cx="120" cy="165" r="4.5" fill="#E0F2FE" />
-          <Circle cx="80" cy="255" r="3.5" fill="#38BDF8" />
-        </Svg>
-      </Animated.View>
-
-      {/* 5. Venom Symbiote Atmospheric Energy Breath (Bottom Edges) */}
-      <Animated.View style={[styles.symbioteBottomOverlay, symbioteAnimStyle]} pointerEvents="none">
-        <Svg width="100%" height={160} viewBox={`0 0 ${screenWidth} 160`} fill="none">
-          <Defs>
-            <RadialGradient id="venomPurpleGlowLeft" cx="0%" cy="100%" r="85%">
-              <Stop offset="0%" stopColor="#7C3AED" stopOpacity="0.32" />
-              <Stop offset="60%" stopColor="#4C1D95" stopOpacity="0.12" />
-              <Stop offset="100%" stopColor="#0B0C0E" stopOpacity="0" />
-            </RadialGradient>
-            <RadialGradient id="venomPurpleGlowRight" cx="100%" cy="100%" r="85%">
-              <Stop offset="0%" stopColor="#8B5CF6" stopOpacity="0.3" />
-              <Stop offset="60%" stopColor="#581C87" stopOpacity="0.1" />
-              <Stop offset="100%" stopColor="#0B0C0E" stopOpacity="0" />
-            </RadialGradient>
-          </Defs>
-          <Path d={`M0 0 H${screenWidth * 0.55} V160 H0 Z`} fill="url(#venomPurpleGlowLeft)" />
-          <Path d={`M${screenWidth * 0.45} 0 H${screenWidth} V160 H${screenWidth * 0.45} Z`} fill="url(#venomPurpleGlowRight)" />
-        </Svg>
-      </Animated.View>
-
-      {/* 6. Active Laser Progress Bar Overlay (Precision aligned with printed bar) */}
-      <View
-        style={[
-          styles.progressOverlayContainer,
-          {
-            top: progressTopOffset,
-            width: progressTrackWidth,
-          },
-        ]}
-        pointerEvents="none"
-      >
-        <View style={styles.activeProgressTrack}>
-          <Animated.View style={[styles.activeProgressFill, progressFillAnimStyle]}>
-            {/* Bright Laser Spark Head */}
-            <View style={styles.activeLaserHead} />
-          </Animated.View>
-        </View>
-      </View>
-
-      {/* 7. Immediate Skip Button (Top Right) */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.skipButton}
-          onPress={handleSkip}
-          activeOpacity={0.7}
-          hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
-          accessibilityRole="button"
-          accessibilityLabel="Skip intro and open dashboard"
-        >
-          <Text style={styles.skipText}>Skip</Text>
-          <Ionicons name="chevron-forward" size={13} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-
-      {/* 8. Fallback Error Notice if offline initialization fails */}
-      {initError && (
-        <View style={styles.errorBanner}>
-          <Text style={styles.errorText}>Notice: {initError}</Text>
+        {/* 2. Top Bar with Safe Inset: Skip button */}
+        <View style={styles.topBar}>
           <TouchableOpacity
-            style={styles.retryBtn}
-            onPress={() => (onRetry ? onRetry() : finishIntro())}
+            style={styles.skipButton}
+            onPress={handleSkip}
+            activeOpacity={0.75}
+            hitSlop={{ top: 14, bottom: 14, left: 14, right: 14 }}
+            accessibilityRole="button"
+            accessibilityLabel="Skip intro and open dashboard"
           >
-            <Text style={styles.retryBtnText}>Continue Offline</Text>
+            <Ionicons name="play-skip-forward" size={11} color="#FFFFFF" />
+            <Text style={styles.skipText}>SKIP</Text>
           </TouchableOpacity>
         </View>
-      )}
+
+        {/* 3. Spider-Man Corner Web Specular Pulse (Top Left) */}
+        <Animated.View style={[styles.webCornerOverlay, webAnimStyle]} pointerEvents="none">
+          <Svg width="100%" height="100%" viewBox="0 0 200 200" fill="none">
+            <Defs>
+              <RadialGradient id="webCrimsonGlow" cx="0%" cy="0%" r="85%">
+                <Stop offset="0%" stopColor="#EF4444" stopOpacity="0.45" />
+                <Stop offset="60%" stopColor="#EF4444" stopOpacity="0.12" />
+                <Stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
+              </RadialGradient>
+            </Defs>
+            <Path d="M0 0 H200 V200 H0 Z" fill="url(#webCrimsonGlow)" />
+          </Svg>
+        </Animated.View>
+
+        {/* 4. Thor Electric-Blue Lightning Arc Overlay (Flashes over Venom's storm clouds) */}
+        <Animated.View style={[styles.lightningOverlay, lightningAnimStyle]} pointerEvents="none">
+          <Svg width="100%" height="100%" viewBox="0 0 260 340" fill="none">
+            <Path
+              d="M240 10 L180 80 L195 98 L130 175 L155 190 L90 270"
+              stroke="#38BDF8"
+              strokeWidth="3.6"
+              strokeOpacity="0.95"
+            />
+            <Path
+              d="M240 10 L180 80 L195 98 L130 175 L155 190 L90 270"
+              stroke="#FFFFFF"
+              strokeWidth="1.8"
+              strokeOpacity="1"
+            />
+            <Path
+              d="M180 80 L140 105 L125 140"
+              stroke="#0EA5E9"
+              strokeWidth="1.8"
+              strokeOpacity="0.8"
+            />
+            <Path
+              d="M130 175 L170 200 L160 235"
+              stroke="#38BDF8"
+              strokeWidth="1.6"
+              strokeOpacity="0.8"
+            />
+            <Circle cx="130" cy="175" r="5" fill="#E0F2FE" />
+            <Circle cx="90" cy="270" r="4" fill="#38BDF8" />
+          </Svg>
+        </Animated.View>
+
+        {/* 5. Dynamic Mission Status Pill */}
+        <View style={styles.statusContainer} pointerEvents="none">
+          <View style={styles.statusPill}>
+            <Text style={styles.statusText} numberOfLines={1} ellipsizeMode="tail">
+              {statusText}
+            </Text>
+          </View>
+        </View>
+
+        {/* 6. Active Laser Glowing Progress Bar with Real-time Percentage Counter */}
+        <View style={styles.progressContainer} pointerEvents="none">
+          <View style={styles.progressTrack}>
+            <Animated.View style={[styles.progressFill, progressFillAnimStyle]}>
+              <Animated.View style={[styles.laserSpark, laserHeadAnimStyle]} />
+            </Animated.View>
+          </View>
+          <View style={styles.percentBadge}>
+            <Text style={styles.percentageText}>{percent}%</Text>
+          </View>
+        </View>
+
+        {/* 7. Fallback Error Notice if offline initialization fails */}
+        {initError && (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorText}>Notice: {initError}</Text>
+            <TouchableOpacity
+              style={styles.retryBtn}
+              onPress={() => (onRetry ? onRetry() : finishIntro())}
+            >
+              <Text style={styles.retryBtnText}>Continue Offline</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     </Animated.View>
   );
 };
@@ -373,106 +470,185 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#07080A',
+    backgroundColor: '#070A0F',
     zIndex: 9999,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  topVignette: {
+  phoneFrame: {
+    height: '100%',
+    maxHeight: '100%',
+    aspectRatio: 576 / 1024,
+    maxWidth: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+    backgroundColor: '#070A0F',
+    borderRadius: Platform.OS === 'web' ? 16 : 0,
+    borderWidth: Platform.OS === 'web' ? 1 : 0,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.9,
+    shadowRadius: 32,
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 100,
-    zIndex: 10,
+    bottom: 0,
+  },
+  heroHeartbeatContainer: {
+    position: 'absolute',
+    top: '36%',
+    left: '48%',
+    marginLeft: -60,
+    marginTop: -60,
+    zIndex: 4,
   },
   topBar: {
     position: 'absolute',
-    top: Platform.OS === 'android' ? (StatusBar.currentHeight || 28) + 8 : 48,
-    right: 18,
+    top: Platform.OS === 'android' ? (StatusBar.currentHeight || 28) + 12 : 36,
+    left: 20,
     zIndex: 30,
   },
   skipButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(11, 12, 14, 0.72)',
+    backgroundColor: 'rgba(10, 12, 16, 0.82)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     paddingVertical: 5,
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
     borderRadius: 20,
-    gap: 3,
+    gap: 5,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
+    shadowOpacity: 0.7,
+    shadowRadius: 5,
     elevation: 4,
   },
   skipText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   webCornerOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
-    width: 180,
-    height: 180,
+    width: 200,
+    height: 200,
     zIndex: 5,
   },
   lightningOverlay: {
     position: 'absolute',
-    top: '8%',
-    right: '2%',
-    width: '52%',
-    height: '42%',
+    top: '6%',
+    right: '0%',
+    width: '56%',
+    height: '46%',
     zIndex: 6,
   },
-  symbioteBottomOverlay: {
+  statusContainer: {
     position: 'absolute',
-    bottom: 0,
+    top: '80.0%',
     left: 0,
     right: 0,
-    height: 160,
-    zIndex: 5,
-  },
-  progressOverlayContainer: {
-    position: 'absolute',
-    alignSelf: 'center',
-    height: 12,
-    justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 20,
+    zIndex: 25,
   },
-  activeProgressTrack: {
-    width: '100%',
-    height: 7,
-    borderRadius: 4,
+  statusPill: {
+    backgroundColor: '#070A0F',
+    paddingVertical: 3,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    maxWidth: '85%',
+  },
+  statusText: {
+    color: '#E0F2FE',
+    fontSize: 10.5,
+    fontStyle: 'italic',
+    fontWeight: '700',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  progressContainer: {
+    position: 'absolute',
+    top: '83.6%',
+    left: '15.5%',
+    right: '12%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    zIndex: 26,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#0B0F19',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.85)',
     overflow: 'hidden',
-    backgroundColor: 'transparent',
-  },
-  activeProgressFill: {
-    height: '100%',
-    backgroundColor: 'rgba(239, 68, 68, 0.88)',
-    borderRadius: 4,
     shadowColor: '#EF4444',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.95,
     shadowRadius: 8,
-    position: 'relative',
   },
-  activeLaserHead: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 9,
+  progressFill: {
     height: '100%',
-    borderRadius: 4,
+    backgroundColor: '#EF4444',
+    borderRadius: 5,
+    position: 'relative',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+  },
+  laserSpark: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 13,
+    height: 13,
+    borderRadius: 6.5,
     backgroundColor: '#FFFFFF',
     shadowColor: '#38BDF8',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
-    shadowRadius: 6,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  percentBadge: {
+    backgroundColor: '#070A0F',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+  },
+  percentageText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
   errorBanner: {
     position: 'absolute',
