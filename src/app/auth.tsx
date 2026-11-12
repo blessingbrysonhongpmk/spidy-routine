@@ -1,7 +1,7 @@
+import { AppScreenShell } from '@/components/AppScreenShell';
 import { SpidyButton } from '@/components/SpidyButton';
 import { SpidyInput } from '@/components/SpidyInput';
 import { SpidyLogo } from '@/components/SpidyLogo';
-import { WebBackground } from '@/components/WebBackground';
 import { Radii, Spacing, SpideyColors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useSound } from '@/context/SoundContext';
@@ -76,13 +76,12 @@ export default function AuthScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <WebBackground />
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <AppScreenShell topBreathingSpace={16} applyBottomInset={true}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Vector Spidy Brand Header (Zero personal photo) */}
         <View style={styles.brandBox}>
           <View style={styles.heroLogoWrapper}>
@@ -191,17 +190,18 @@ export default function AuthScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+  </AppScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: SpideyColors.background,
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingTop: 64,
+    paddingTop: 12,
     paddingBottom: Spacing.huge,
   },
   brandBox: {

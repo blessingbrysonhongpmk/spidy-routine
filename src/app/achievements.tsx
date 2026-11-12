@@ -1,4 +1,4 @@
-import { WebBackground } from '@/components/WebBackground';
+import { AppScreenShell } from '@/components/AppScreenShell';
 import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
 import { useTheme } from '@/hooks/use-theme';
@@ -8,8 +8,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-  Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -75,9 +73,7 @@ export default function AchievementsScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <WebBackground variant="minimal" showLightning={false} />
-
+    <AppScreenShell topBreathingSpace={8} applyBottomInset={true}>
       {/* Top Header */}
       <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
         <TouchableOpacity
@@ -231,20 +227,17 @@ export default function AchievementsScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
+    paddingTop: 4,
     paddingBottom: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },

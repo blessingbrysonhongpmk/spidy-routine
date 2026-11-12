@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Easing,
   runOnJS,
@@ -55,6 +56,7 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
   initError,
   onRetry,
 }) => {
+  const insets = useSafeAreaInsets();
   const completedRef = useRef(false);
   const [minBarComplete, setMinBarComplete] = useState(false);
   const [percent, setPercent] = useState(0);
@@ -218,13 +220,13 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
       setPercent(easedProgress);
 
       if (easedProgress < 22) {
-        setStatusText('A city in shadows. A hero takes his stand...');
+        setStatusText('Initializing Your Mission...');
       } else if (easedProgress < 46) {
-        setStatusText('Master the webs. Command the thunder...');
+        setStatusText('A boy with a dream. A city waiting for a hero...');
       } else if (easedProgress < 70) {
-        setStatusText('Every sunrise is your mission. Stand tall.');
+        setStatusText('Master the webs. Command the thunder...');
       } else if (easedProgress < 92) {
-        setStatusText('Embrace your destiny. Conquer today.');
+        setStatusText('Every sunrise is your mission. Stand tall.');
       } else {
         setStatusText('Welcome home, Boss. Your legacy begins.');
       }
@@ -365,7 +367,18 @@ export const CinematicIntro: React.FC<CinematicIntroProps> = ({
         </Animated.View>
 
         {/* 2. Top Bar with Safe Inset: Skip button */}
-        <View style={styles.topBar}>
+        <View
+          style={[
+            styles.topBar,
+            {
+              top:
+                Math.max(
+                  insets?.top ?? 0,
+                  Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 24
+                ) + 12,
+            },
+          ]}
+        >
           <TouchableOpacity
             style={styles.skipButton}
             onPress={handleSkip}
@@ -561,25 +574,26 @@ const styles = StyleSheet.create({
     zIndex: 25,
   },
   statusPill: {
-    backgroundColor: '#070A0F',
-    paddingVertical: 3,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: 'rgba(7, 10, 15, 0.72)',
+    paddingVertical: 2,
+    paddingHorizontal: 12,
+    borderRadius: 8,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.9,
-    shadowRadius: 6,
-    maxWidth: '85%',
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    maxWidth: '88%',
   },
   statusText: {
-    color: '#E0F2FE',
-    fontSize: 10.5,
+    color: '#E2E8F0',
+    fontSize: 12,
     fontStyle: 'italic',
-    fontWeight: '700',
-    letterSpacing: 0.2,
+    fontWeight: '600',
+    letterSpacing: 0.4,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   progressContainer: {
     position: 'absolute',
@@ -595,9 +609,9 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#0B0F19',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.85)',
+    backgroundColor: 'rgba(11, 15, 25, 0.85)',
+    borderWidth: 1.2,
+    borderColor: 'rgba(239, 68, 68, 0.9)',
     overflow: 'hidden',
     shadowColor: '#EF4444',
     shadowOffset: { width: 0, height: 0 },
@@ -618,9 +632,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    width: 13,
-    height: 13,
-    borderRadius: 6.5,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: '#FFFFFF',
     shadowColor: '#38BDF8',
     shadowOffset: { width: 0, height: 0 },
@@ -629,15 +643,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   percentBadge: {
-    backgroundColor: '#070A0F',
+    backgroundColor: 'rgba(7, 10, 15, 0.72)',
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 6,
-    minWidth: 44,
+    minWidth: 42,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
@@ -645,10 +657,13 @@ const styles = StyleSheet.create({
   },
   percentageText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '800',
     letterSpacing: 0.5,
     textAlign: 'center',
+    textShadowColor: 'rgba(255, 255, 255, 0.5)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
   },
   errorBanner: {
     position: 'absolute',

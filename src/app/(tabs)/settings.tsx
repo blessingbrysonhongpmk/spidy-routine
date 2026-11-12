@@ -1,7 +1,7 @@
+import { AppScreenShell } from '@/components/AppScreenShell';
 import { ModalHeroProfile } from '@/components/ModalHeroProfile';
 import { SpiderEmblem } from '@/components/SpiderEmblem';
 import { SpidyAvatar } from '@/components/SpidyLogo';
-import { WebBackground } from '@/components/WebBackground';
 import { WebButtonInteraction } from '@/components/WebButtonInteraction';
 import { Radii, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
@@ -16,8 +16,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-  Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
@@ -25,9 +23,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colors = useTheme();
   const { themeMode, setThemeMode } = useThemeContext();
   const { user, logout, resetProfile } = useAuth();
@@ -155,9 +155,7 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <WebBackground variant="minimal" showLightning={false} />
-
+    <AppScreenShell topBreathingSpace={8} backgroundProps={{ variant: 'minimal', showLightning: false }}>
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
@@ -169,7 +167,7 @@ export default function SettingsScreen() {
           style={styles.scrollContainer}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: 32 },
+            { paddingBottom: Math.max(insets.bottom, 12) + 76 },
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -768,14 +766,11 @@ export default function SettingsScreen() {
         visible={profileModalVisible}
         onClose={() => setProfileModalVisible(false)}
       />
-    </SafeAreaView>
+    </AppScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   mainContainer: {
     flex: 1,
     width: '100%',
@@ -784,7 +779,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.md,
-    paddingTop: Platform.OS === 'android' ? 14 : Spacing.md,
+    paddingTop: 4,
     paddingBottom: Spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },

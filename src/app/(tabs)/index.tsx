@@ -1,4 +1,5 @@
-import { WebBackground } from '@/components/WebBackground';
+import { AppScreenShell } from '@/components/AppScreenShell';
+import { SpidyAvatar, SpidyLogo } from '@/components/SpidyLogo';
 import { useAuth } from '@/context/AuthContext';
 import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
@@ -16,9 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-  Platform,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -133,14 +132,12 @@ export default function HomeScreen() {
   const routinePct = routineTotal > 0 ? Math.min(100, Math.round((routineDone / routineTotal) * 100)) : 0;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <WebBackground variant="minimal" showLightning={false} />
-
+    <AppScreenShell topBreathingSpace={8} backgroundProps={{ variant: 'minimal', showLightning: false }}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom + 24, 32) },
+          { paddingBottom: Math.max(insets.bottom, 12) + 76 },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -153,7 +150,53 @@ export default function HomeScreen() {
         }
       >
         <View style={styles.responsiveWrapper}>
-          {/* 1. Greeting & Current Date + Settings Access */}
+          {/* Top Brand & Profile Bar */}
+          <View style={styles.topBrandBar}>
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)')}
+              activeOpacity={0.8}
+              accessibilityLabel="Spidey Flow Home"
+            >
+              <SpidyLogo variant="full" size={24} />
+            </TouchableOpacity>
+
+            <View style={styles.topActionsRow}>
+              <TouchableOpacity
+                style={styles.profileAvatarBtn}
+                onPress={() => {
+                  playSound('buttonTap');
+                  triggerHaptic('light');
+                  router.push('/profile');
+                }}
+                activeOpacity={0.75}
+                accessibilityLabel="Operative Profile"
+              >
+                <SpidyAvatar
+                  size={34}
+                  name={displayName}
+                  archetype={user?.heroArchetype || 'spiderman'}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.settingsIconBtn,
+                  { backgroundColor: colors.surface, borderColor: colors.borderMuted },
+                ]}
+                onPress={() => {
+                  playSound('buttonTap');
+                  triggerHaptic('light');
+                  router.push('/(tabs)/settings');
+                }}
+                activeOpacity={0.75}
+                accessibilityLabel="Settings and Profile"
+              >
+                <Ionicons name="settings-outline" size={19} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* 1. Greeting & Current Date */}
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
               <Text style={[styles.greetingText, { color: colors.text }]} numberOfLines={1}>
@@ -166,21 +209,6 @@ export default function HomeScreen() {
                 {dateHeader}
               </Text>
             </View>
-
-            <TouchableOpacity
-              style={[
-                styles.settingsIconBtn,
-                { backgroundColor: colors.surface, borderColor: colors.borderMuted },
-              ]}
-              onPress={() => {
-                playSound('buttonTap');
-                router.push('/(tabs)/settings');
-              }}
-              activeOpacity={0.75}
-              accessibilityLabel="Settings and Profile"
-            >
-              <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
-            </TouchableOpacity>
           </View>
 
           {/* Error Recovery Notice (Non-destructive) */}
@@ -543,31 +571,45 @@ export default function HomeScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </AppScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 14 : 8,
+    paddingTop: 4,
   },
   responsiveWrapper: {
     width: '100%',
     maxWidth: 600,
     alignSelf: 'center',
   },
+  topBrandBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+  topActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  profileAvatarBtn: {
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 12,
     gap: 12,
   },
   headerLeft: {

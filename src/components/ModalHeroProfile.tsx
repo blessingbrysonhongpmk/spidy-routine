@@ -16,6 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLightning } from './LightningEffect';
 import { WebButtonInteraction } from './WebButtonInteraction';
 
@@ -25,6 +26,7 @@ interface ModalHeroProfileProps {
 }
 
 export const ModalHeroProfile: React.FC<ModalHeroProfileProps> = ({ visible, onClose }) => {
+  const insets = useSafeAreaInsets();
   const colors = useTheme();
   const { user, updateProfile } = useAuth();
   const { playSound, triggerHaptic } = useSound();
@@ -78,9 +80,17 @@ export const ModalHeroProfile: React.FC<ModalHeroProfileProps> = ({ visible, onC
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.modalOverlay}
+        style={[styles.modalOverlay, { paddingTop: Math.max(insets.top, 24) }]}
       >
-        <View style={[styles.sheetContainer, { backgroundColor: colors.surface }]}>
+        <View
+          style={[
+            styles.sheetContainer,
+            {
+              backgroundColor: colors.surface,
+              paddingBottom: Math.max(insets.bottom, 16),
+            },
+          ]}
+        >
           {/* Top Bar */}
           <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
             <View>

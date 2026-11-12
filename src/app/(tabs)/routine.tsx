@@ -1,4 +1,4 @@
-import { WebBackground } from '@/components/WebBackground';
+import { AppScreenShell } from '@/components/AppScreenShell';
 import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
 import { useTheme } from '@/hooks/use-theme';
@@ -20,7 +20,6 @@ import {
   LayoutAnimation,
   Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -28,6 +27,7 @@ import {
   UIManager,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -48,6 +48,7 @@ const ROUTINE_ACCENT_MAP: Record<string, string> = {
 
 export default function RoutineScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colors = useTheme();
   const { playSound, triggerHaptic } = useSound();
   const {
@@ -250,9 +251,7 @@ export default function RoutineScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <WebBackground variant="minimal" showLightning={false} />
-
+    <AppScreenShell topBreathingSpace={8} backgroundProps={{ variant: 'minimal', showLightning: false }}>
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={styles.header}>
@@ -355,7 +354,10 @@ export default function RoutineScreen() {
         {/* Scrollable Content */}
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 12) + 76 },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {/* Today's / Day's Routine Progress Card */}
@@ -952,14 +954,11 @@ export default function RoutineScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </AppScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   mainContainer: {
     flex: 1,
     width: '100%',
@@ -971,7 +970,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 14 : 8,
+    paddingTop: 4,
     paddingBottom: 10,
   },
   headerTitle: {

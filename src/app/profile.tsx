@@ -1,7 +1,7 @@
+import { AppScreenShell } from '@/components/AppScreenShell';
 import { SpidyButton } from '@/components/SpidyButton';
 import { SpidyInput } from '@/components/SpidyInput';
 import { SpidyAvatar } from '@/components/SpidyLogo';
-import { WebBackground } from '@/components/WebBackground';
 import { Radii, Spacing } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import { useSound } from '@/context/SoundContext';
@@ -14,7 +14,6 @@ import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
@@ -100,9 +99,7 @@ export default function ProfileScreen() {
     ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <WebBackground />
-
+    <AppScreenShell topBreathingSpace={8} applyBottomInset={true}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -466,20 +463,17 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </AppScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.xl,
-    paddingTop: Platform.OS === 'android' ? 14 : Spacing.md,
+    paddingTop: 4,
     paddingBottom: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },

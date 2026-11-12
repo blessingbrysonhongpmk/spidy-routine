@@ -27,6 +27,11 @@
         "USE_EXACT_ALARM",
         "VIBRATE"
       ],
+      "androidStatusBar": {
+        "barStyle": "light-content",
+        "backgroundColor": "#00000000",
+        "translucent": true
+      },
       "predictiveBackGestureEnabled": false
     },
     "web": {

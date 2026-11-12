@@ -1,6 +1,6 @@
+import { AppScreenShell } from '@/components/AppScreenShell';
 import { useLightning } from '@/components/LightningEffect';
 import { TaskItem } from '@/components/TaskItem';
-import { WebBackground } from '@/components/WebBackground';
 import { WebButtonInteraction } from '@/components/WebButtonInteraction';
 import { Radii, Spacing } from '@/constants/theme';
 import { useDatabase } from '@/context/DatabaseContext';
@@ -18,17 +18,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-  Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CalendarScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colors = useTheme();
   const {
     allTasks,
@@ -118,9 +118,7 @@ export default function CalendarScreen() {
   const dayHeaders = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <WebBackground variant="minimal" showLightning={false} />
-
+    <AppScreenShell topBreathingSpace={8} backgroundProps={{ variant: 'minimal', showLightning: false }}>
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: colors.borderSubtle }]}>
@@ -165,7 +163,7 @@ export default function CalendarScreen() {
           style={styles.scrollContainer}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: 28 },
+            { paddingBottom: Math.max(insets.bottom, 12) + 76 },
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -356,14 +354,11 @@ export default function CalendarScreen() {
           ) : null}
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </AppScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   mainContainer: {
     flex: 1,
     width: '100%',
@@ -372,7 +367,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: Spacing.md,
-    paddingTop: Platform.OS === 'android' ? 14 : Spacing.md,
+    paddingTop: 4,
     paddingBottom: Spacing.sm,
     flexDirection: 'row',
     justifyContent: 'space-between',

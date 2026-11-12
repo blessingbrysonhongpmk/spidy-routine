@@ -50,6 +50,7 @@ const server = http.createServer((req, res) => {
     } else if (!path.extname(reqPath) || path.extname(reqPath) === '.html') {
       filePath = path.join(DIST_DIR, 'index.html');
     } else {
+      console.log('404:', reqPath);
       res.writeHead(404);
       return res.end('Not Found: ' + reqPath);
     }
@@ -63,6 +64,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': contentType });
     res.end(data);
   } catch (err) {
+    console.log('500:', reqPath, err.message);
     res.writeHead(500);
     res.end('Server Error: ' + err.message);
   }
@@ -143,6 +145,7 @@ server.listen(PORT, async () => {
           const val = evalRes?.result?.value;
           if (val && (val.hasSkip || val.imgCount > 0)) {
             checkDom = val;
+            await wait(1000);
             break;
           }
         }

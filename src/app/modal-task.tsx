@@ -25,10 +25,12 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Line, Path } from 'react-native-svg';
 
 export default function ModalTaskScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = windowWidth >= 640;
 
@@ -197,7 +199,7 @@ export default function ModalTaskScreen() {
   ];
 
   return (
-    <View style={[styles.modalOverlay, isDesktop && styles.modalOverlayDesktop]}>
+    <View style={[styles.modalOverlay, { paddingTop: Math.max(insets.top, 24) }, isDesktop && styles.modalOverlayDesktop]}>
       {/* Backdrop */}
       <TouchableWithoutFeedback onPress={() => router.back()}>
         <View style={styles.backdrop} />
@@ -249,7 +251,10 @@ export default function ModalTaskScreen() {
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scrollBody}
+            contentContainerStyle={[
+              styles.scrollBody,
+              { paddingBottom: Math.max(insets.bottom + 16, 28) },
+            ]}
           >
             {/* Primary Task Title Input */}
             <View style={styles.sectionBlock}>

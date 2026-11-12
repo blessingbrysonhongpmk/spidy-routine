@@ -19,6 +19,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ICON_CHOICES = [
   'barbell-outline',
@@ -39,6 +40,7 @@ const REMINDER_OFFSETS = ['At start time', '10 min before', '15 min before', '30
 
 export default function ModalRoutineScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colors = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = windowWidth >= 640;
@@ -270,7 +272,7 @@ export default function ModalRoutineScreen() {
   };
 
   return (
-    <View style={[styles.overlay, isDesktop && styles.overlayDesktop]}>
+    <View style={[styles.overlay, { paddingTop: Math.max(insets.top, 24) }, isDesktop && styles.overlayDesktop]}>
       <TouchableWithoutFeedback onPress={() => router.back()}>
         <View style={styles.backdrop} />
       </TouchableWithoutFeedback>
@@ -327,7 +329,10 @@ export default function ModalRoutineScreen() {
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scrollBody}
+            contentContainerStyle={[
+              styles.scrollBody,
+              { paddingBottom: Math.max(insets.bottom + 16, 28) },
+            ]}
           >
             {/* Optional Icon Picker Drawer */}
             {showIconPicker ? (

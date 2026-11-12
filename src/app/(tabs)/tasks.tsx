@@ -1,4 +1,4 @@
-import { WebBackground } from '@/components/WebBackground';
+import { AppScreenShell } from '@/components/AppScreenShell';
 import { useDatabase } from '@/context/DatabaseContext';
 import { useSound } from '@/context/SoundContext';
 import { useTheme } from '@/hooks/use-theme';
@@ -16,7 +16,6 @@ import { useMemo, useState } from 'react';
 import {
   Platform,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,12 +23,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type PrimaryTab = 'today' | 'upcoming' | 'completed';
 type PriorityFilter = 'all' | TaskPriority;
 
 export default function TasksScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colors = useTheme();
   const { playSound, triggerHaptic } = useSound();
   const { allTasks, toggleTask, editTask, removeTask, refreshData } = useDatabase();
@@ -269,9 +270,7 @@ export default function TasksScreen() {
   const visibleOverdue = showAllOverdue ? overdueList : overdueList.slice(0, 2);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <WebBackground variant="minimal" showLightning={false} />
-
+    <AppScreenShell topBreathingSpace={8} backgroundProps={{ variant: 'minimal', showLightning: false }}>
       <View style={styles.mainContainer}>
         {/* Header */}
         <View style={styles.header}>
@@ -499,7 +498,10 @@ export default function TasksScreen() {
         {/* Tasks List */}
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 12) + 84 },
+          ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -637,14 +639,11 @@ export default function TasksScreen() {
           <Ionicons name="add" size={28} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </AppScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   mainContainer: {
     flex: 1,
     width: '100%',
@@ -657,7 +656,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 14 : 8,
+    paddingTop: 4,
     paddingBottom: 12,
   },
   headerTitle: {

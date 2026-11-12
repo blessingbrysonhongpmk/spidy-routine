@@ -9,7 +9,8 @@ import { Stack, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StatusBar as RNStatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Prevent the native splash screen from auto-hiding before our intro mounts
 SplashScreen.preventAutoHideAsync().catch(() => { });
@@ -55,6 +56,12 @@ function AppNavigation() {
     sessionIntroShown = true;
     setShowIntro(false);
   };
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      RNStatusBar.setBarStyle(isDark ? 'light-content' : 'dark-content');
+    }
+  }, [isDark]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -131,17 +138,19 @@ function AppNavigation() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <SoundProvider>
-        <AuthProvider>
-          <DatabaseProvider>
-            <LightningProvider>
-              <AppNavigation />
-            </LightningProvider>
-          </DatabaseProvider>
-        </AuthProvider>
-      </SoundProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <SoundProvider>
+          <AuthProvider>
+            <DatabaseProvider>
+              <LightningProvider>
+                <AppNavigation />
+              </LightningProvider>
+            </DatabaseProvider>
+          </AuthProvider>
+        </SoundProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 
